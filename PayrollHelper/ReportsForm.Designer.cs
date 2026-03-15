@@ -126,7 +126,7 @@
             Controls.Add(label2);
             Controls.Add(label1);
             Name = "ReportsForm";
-            Text = "ReportsForm";
+            Text = "Формирование отчетов";
             ResumeLayout(false);
             PerformLayout();
         }

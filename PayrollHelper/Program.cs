@@ -1,16 +1,30 @@
+using Microsoft.EntityFrameworkCore;
+using PayrollHelper.Models;
+using System.Text;
+
 namespace PayrollHelper
 {
     internal static class Program
     {
-        /// <summary>
-        ///  The main entry point for the application.
-        /// </summary>
+        public static PayrollDbContext dbContext; // Доступно во всем приложении
+
         [STAThread]
         static void Main()
         {
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
-            ApplicationConfiguration.Initialize();
+            // ОБЯЗАТЕЛЬНО: Регистрируем провайдер кодировок для поддержки кириллицы (WIN1251)
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Настройка контекста БД (Используем БАЗОВЫЙ тип payroll_dbContext для опций)
+            var optionsBuilder = new DbContextOptionsBuilder<payroll_dbContext>();
+            string connectionString = "Host=localhost;Database=payroll_db;Username=payroll_user;Password=123;Client Encoding=UTF8";
+            
+            optionsBuilder.UseNpgsql(connectionString);
+            
+            // Инициализация контекста (Теперь типы совпадают)
+            dbContext = new PayrollDbContext(optionsBuilder.Options);
+
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new LoginForm());
         }
     }

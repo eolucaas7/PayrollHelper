@@ -62,9 +62,9 @@
             // comboBoxEmployeeName
             // 
             comboBoxEmployeeName.FormattingEnabled = true;
-            comboBoxEmployeeName.Location = new Point(734, 12);
+            comboBoxEmployeeName.Location = new Point(655, 12);
             comboBoxEmployeeName.Name = "comboBoxEmployeeName";
-            comboBoxEmployeeName.Size = new Size(149, 23);
+            comboBoxEmployeeName.Size = new Size(228, 23);
             comboBoxEmployeeName.TabIndex = 5;
             comboBoxEmployeeName.Text = "Выберите сотрудника";
             comboBoxEmployeeName.SelectedIndexChanged += comboBoxEmployeeName_SelectedIndexChanged;

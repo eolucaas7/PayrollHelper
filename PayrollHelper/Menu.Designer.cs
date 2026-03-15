@@ -75,7 +75,7 @@
             Controls.Add(buttonEditDatabase);
             Controls.Add(buttonDashBoard);
             Name = "Menu";
-            Text = "Menu";
+            Text = "Меню";
             ResumeLayout(false);
         }
 

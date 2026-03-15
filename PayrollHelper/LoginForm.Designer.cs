@@ -35,7 +35,7 @@
             // 
             // usernameTextBox
             // 
-            usernameTextBox.Location = new Point(33, 12);
+            usernameTextBox.Location = new Point(59, 12);
             usernameTextBox.Name = "usernameTextBox";
             usernameTextBox.Size = new Size(174, 23);
             usernameTextBox.TabIndex = 0;
@@ -45,7 +45,7 @@
             // 
             // passwordTextBox
             // 
-            passwordTextBox.Location = new Point(33, 56);
+            passwordTextBox.Location = new Point(59, 60);
             passwordTextBox.Name = "passwordTextBox";
             passwordTextBox.Size = new Size(174, 23);
             passwordTextBox.TabIndex = 1;
@@ -56,7 +56,7 @@
             // loginButton
             // 
             loginButton.FlatStyle = FlatStyle.Popup;
-            loginButton.Location = new Point(71, 106);
+            loginButton.Location = new Point(107, 106);
             loginButton.Name = "loginButton";
             loginButton.Size = new Size(75, 23);
             loginButton.TabIndex = 2;
@@ -68,7 +68,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(226, 141);
+            ClientSize = new Size(262, 141);
             Controls.Add(loginButton);
             Controls.Add(passwordTextBox);
             Controls.Add(usernameTextBox);
