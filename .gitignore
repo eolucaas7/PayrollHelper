@@ -1,0 +1,76 @@
+# .NET Core / .NET 6
+bin/
+obj/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+packages/
+*.nupkg
+*.dll
+*.exe
+*.pdb
+*.vs
+
+# Visual Studio
+.vs/
+*.csproj.user
+*.csproj.user.*
+*.csproj.user
+_ReSharper.*/
+*.DotSettings.user
+.vsconfig
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+bld/
+[Bb]in/
+[Oo]bj/
+
+# Project specific
+Properties/Settings.Designer.cs
+appsettings.Development.json
+appsettings.Production.json
+
+# Database
+*.db
+*.mdf
+*.ldf
+
+# Logs
+*.log
+logs/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# NuGet
+packages/
+*.nupkg
+project.lock.json
+project.assets.json
+*.nuget.props
+*.nuget.targets
+
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
