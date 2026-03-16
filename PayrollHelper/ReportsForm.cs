@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -25,7 +26,31 @@ namespace PayrollHelper
             reportTypeComboBox.Items.Add("Отчет по премии");
             reportTypeComboBox.SelectedIndex = 0; // Выбрать первый по умолчанию
 
-            string savedPath = Properties.Settings.Default.ReportFolderPath;
+            // Инициализация пути к отчетам по умолчанию
+            string savedPath = Settings.Default.ReportFolderPath;
+            
+            if (string.IsNullOrEmpty(savedPath) || !Directory.Exists(savedPath))
+            {
+                try
+                {
+                    string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                    string defaultReportsFolder = Path.Combine(desktopPath, "Reports");
+                    
+                    // Создаем папку, если она еще не существует
+                    Directory.CreateDirectory(defaultReportsFolder);
+                    
+                    // Сохраняем путь в настройки
+                    Settings.Default.ReportFolderPath = defaultReportsFolder;
+                    Settings.Default.Save();
+                    
+                    savedPath = defaultReportsFolder;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Не удалось создать папку по умолчанию: {ex.Message}", "Предупреждение", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+
             lblCurrentPath.Text = !string.IsNullOrEmpty(savedPath)
                 ? $"Текущий путь к отчетам: {savedPath}"
                 : "Папка для хранения отчетов не выбрана";
@@ -43,13 +68,12 @@ namespace PayrollHelper
 
             if (employees.Count == 0)
             {
-                // Сообщение уже выводится внутри GetEmployeeData в случае ошибки фильтрации
                 return;
             }
 
             string reportType = reportTypeComboBox.SelectedItem.ToString().ToLower();
             string reportText = GetReportText(reportType);
-            string reportFolderPath = Properties.Settings.Default.ReportFolderPath;
+            string reportFolderPath = Settings.Default.ReportFolderPath;
 
             SaveReport(reportText, reportFolderPath, reportType);
         }
@@ -64,8 +88,8 @@ namespace PayrollHelper
 
                     if (folderDialog.ShowDialog() == DialogResult.OK)
                     {
-                        Properties.Settings.Default.ReportFolderPath = folderDialog.SelectedPath;
-                        Properties.Settings.Default.Save();
+                        Settings.Default.ReportFolderPath = folderDialog.SelectedPath;
+                        Settings.Default.Save();
                         lblCurrentPath.Text = $"Текущий путь к отчетам: {folderDialog.SelectedPath}";
                     }
                 }
@@ -78,16 +102,29 @@ namespace PayrollHelper
 
         private void SaveReport(string reportText, string folderPath, string reportType)
         {
-            string fileName = $"{reportType}_{DateTime.Now.ToString("yyyyMMdd_HHmmss")}.txt";
-
             try
             {
-                File.WriteAllText(Path.Combine(folderPath, fileName), reportText);
-                MessageBox.Show("Отчет успешно создан.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                if (string.IsNullOrEmpty(folderPath))
+                {
+                    MessageBox.Show("Путь для сохранения не указан!", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // Гарантируем, что папка существует перед записью
+                if (!Directory.Exists(folderPath))
+                {
+                    Directory.CreateDirectory(folderPath);
+                }
+
+                string fileName = $"{reportType}_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+                string fullPath = Path.Combine(folderPath, fileName);
+
+                File.WriteAllText(fullPath, reportText);
+                MessageBox.Show($"Отчет успешно сохранен в:\n{fullPath}", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при создании отчета: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Ошибка при сохранении отчета: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -96,13 +133,11 @@ namespace PayrollHelper
             employees.Clear();
             try
             {
-                // Начинаем построение запроса (БЕЗ ToList() ДО ФИЛЬТРАЦИИ)
                 var query = Program.dbContext.Payments
                     .Include(p => p.Employee)
                         .ThenInclude(e => e.PostNumberNavigation)
                     .AsQueryable();
 
-                // Фильтры в Unicode (чтобы избежать проблем в самом коде)
                 string salaryFilter = "\u041e\u043a\u043b\u0430\u0434"; // "Оклад"
                 string bonusFilter = "\u041f\u0440\u0435\u043c\u0438\u044f"; // "Премия"
                 string sumFilter = "\u0441\u0443\u043c\u043c\u0430"; // "сумма"
@@ -111,7 +146,6 @@ namespace PayrollHelper
 
                 if (selectedIndex == 0) // Отчет по зарплате
                 {
-                    // Ищем Оклад (ILike для поиска на стороне БД с учетом регистра PostgreSQL)
                     if (includeBonusesCheckBox.Checked)
                     {
                         query = query.Where(p => EF.Functions.ILike(p.PaymentType, $"%{salaryFilter}%") 
@@ -127,7 +161,6 @@ namespace PayrollHelper
                     query = query.Where(p => EF.Functions.ILike(p.PaymentType, $"%{bonusFilter}%"));
                 }
 
-                // Выполнение запроса и маппинг
                 var results = query.Select(p => new
                 {
                     EmployeeName = p.Employee != null ? p.Employee.EmployeeName : "Неизвестный сотрудник",
@@ -149,7 +182,6 @@ namespace PayrollHelper
             }
             catch (Exception ex)
             {
-                // Выводим детальную ошибку, если она останется
                 string inner = ex.InnerException != null ? $"\nПодробности: {ex.InnerException.Message}" : "";
                 MessageBox.Show($"Ошибка при получении данных: {ex.Message}{inner}", "Ошибка EF Core", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
