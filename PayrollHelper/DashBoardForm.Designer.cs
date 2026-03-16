@@ -62,7 +62,7 @@
             tabControl1.Location = new Point(12, 12);
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
-            tabControl1.Size = new Size(340, 284);
+            tabControl1.Size = new Size(340, 241);
             tabControl1.TabIndex = 0;
             tabControl1.SelectedIndexChanged += tabControl1_SelectedIndexChanged;
             // 
@@ -80,7 +80,7 @@
             tabPage1.Location = new Point(4, 24);
             tabPage1.Name = "tabPage1";
             tabPage1.Padding = new Padding(3);
-            tabPage1.Size = new Size(332, 256);
+            tabPage1.Size = new Size(332, 213);
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Выплаты";
             tabPage1.UseVisualStyleBackColor = true;
@@ -181,7 +181,7 @@
             tabPage2.Location = new Point(4, 24);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new Padding(3);
-            tabPage2.Size = new Size(332, 256);
+            tabPage2.Size = new Size(332, 213);
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Новый сотрудник";
             tabPage2.UseVisualStyleBackColor = true;
@@ -189,7 +189,7 @@
             // buttonAddEmployee
             // 
             buttonAddEmployee.FlatStyle = FlatStyle.Popup;
-            buttonAddEmployee.Location = new Point(6, 217);
+            buttonAddEmployee.Location = new Point(156, 177);
             buttonAddEmployee.Name = "buttonAddEmployee";
             buttonAddEmployee.Size = new Size(134, 23);
             buttonAddEmployee.TabIndex = 9;
@@ -276,7 +276,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(373, 318);
+            ClientSize = new Size(364, 265);
             Controls.Add(tabControl1);
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
