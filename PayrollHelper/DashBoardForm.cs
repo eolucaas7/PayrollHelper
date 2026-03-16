@@ -1,5 +1,4 @@
-﻿using System;
-using Npgsql;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -8,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Microsoft.EntityFrameworkCore;
+using PayrollHelper.Models;
 
 namespace PayrollHelper
 {
@@ -16,43 +17,73 @@ namespace PayrollHelper
         public DashBoardForm()
         {
             InitializeComponent();
-            LoadPostInComboBox();
+
+            // Защита от ошибок Дизайнера Visual Studio
+            if (System.ComponentModel.LicenseManager.UsageMode == System.ComponentModel.LicenseUsageMode.Designtime)
+                return;
+
+            // 1. УСТАНОВКА ИМЕН ВКЛАДОК
+            if (tabControl1.TabPages.Count >= 2)
+            {
+                tabControl1.TabPages[0].Text = "Выплаты";
+                tabControl1.TabPages[1].Text = "Новый сотрудник";
+            }
+
+            // 2. ИНИЦИАЛИЗАЦИЯ КОМБОБОКСА ТИПОВ ВЫПЛАТ
+            comboPaymentType.Items.Clear();
+            comboPaymentType.Items.Add("Зарплата");
+            comboPaymentType.Items.Add("Премия");
+            comboPaymentType.SelectedIndex = 0;
+
+            // Настройка начальной видимости элементов на вкладке "Выплаты"
+            comboBonusType.Visible = false;
+            label2.Visible = false; // label2 - это "Вид премии", а не label7!
+            textSpecialAmount.Visible = false;
+
+            try
+            {
+                // Первичная загрузка данных
+                LoadInitialData();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при инициализации: {ex.Message}");
+            }
+        }
+
+        private void LoadInitialData()
+        {
+            if (Program.dbContext == null) return;
             LoadEmployees();
             LoadBonusTypes();
+            LoadPostInComboBox();
         }
+
+        // ==========================================================
+        // Вкладка "НОВЫЙ СОТРУДНИК" (TabPage2)
+        // ==========================================================
 
         private void LoadPostInComboBox()
         {
             try
             {
-                using (var conn = new NpgsqlConnection(LoadDB.Connection_String))
+                var positions = Program.dbContext.Positions
+                    .Select(p => p.Name)
+                    .ToList();
+
+                comboPosition.Items.Clear();
+                foreach (var name in positions)
                 {
-                    conn.Open();
-                    string query = $"SELECT name FROM positions";
-                    using (var cmd = new NpgsqlCommand(query, conn))
-                    {
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            comboPosition.Items.Clear();
-                            while (reader.Read())
-                            {
-                                comboPosition.Items.Add(reader["name"].ToString());
-                            }
-                        }
-
-
-                    }
-
+                    if (!string.IsNullOrEmpty(name))
+                        comboPosition.Items.Add(name);
                 }
 
                 if (comboPosition.Items.Count > 0)
-                {
                     comboPosition.SelectedIndex = 0;
-                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при загрузке списка таблиц: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Ошибка загрузки должностей: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -60,70 +91,76 @@ namespace PayrollHelper
         {
             try
             {
-                using (var conn = new NpgsqlConnection(LoadDB.Connection_String))
+                // Валидация
+                if (string.IsNullOrWhiteSpace(textFullName.Text))
                 {
-                    conn.Open();
-                    string query = $"SELECT id FROM positions WHERE name='{comboPosition.SelectedItem.ToString()}'";
-                    string fd = "";
-                    using (var cmd = new NpgsqlCommand(query, conn))
-                    {
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            while (reader.Read())
-                            {
-                                fd = reader["id"].ToString();
-                            }
-                        }
-                    }
-                    query = $"INSERT into employees (employee_name, post_number, insurance, phone_number, address) values ('{textFullName.Text}', '{fd}', '{checkInsurance.Checked}','{textPhoneNumber.Text}', '{textAddress.Text}')";
-
-                    using (var cmd = new NpgsqlCommand(query, conn))
-                    {
-                        cmd.ExecuteNonQuery();
-                    }
-
-                    MessageBox.Show("Сотрудник успешно добавлен!", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("Введите ФИО сотрудника.", "Предупреждение", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
                 }
+
+                string selectedPosName = comboPosition.SelectedItem?.ToString();
+                var position = Program.dbContext.Positions.FirstOrDefault(p => p.Name == selectedPosName);
+                if (position == null)
+                {
+                    MessageBox.Show("Выбранная должность не найдена.");
+                    return;
+                }
+
+                // Создание через EF Core
+                var newEmployee = new Employee
+                {
+                    EmployeeName = textFullName.Text,
+                    PostNumber = position.Id,
+                    Insurance = checkInsurance.Checked,
+                    PhoneNumber = textPhoneNumber.Text,
+                    Address = textAddress.Text
+                };
+
+                Program.dbContext.Employees.Add(newEmployee);
+                Program.dbContext.SaveChanges();
+
+                MessageBox.Show("Сотрудник успешно добавлен!", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                
+                // Очистка полей
+                textFullName.Clear();
+                textPhoneNumber.Clear();
+                textAddress.Clear();
+                checkInsurance.Checked = false;
+
+                // Обновляем список сотрудников на вкладке выплат
+                LoadEmployees();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при загрузке списка таблиц: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Ошибка при добавлении сотрудника: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
+        // ==========================================================
+        // Вкладка "ВЫПЛАТЫ" (TabPage1)
+        // ==========================================================
 
         private void LoadEmployees()
         {
             try
             {
-                string query = "SELECT employee_name FROM employees";
+                var employees = Program.dbContext.Employees
+                    .Select(e => e.EmployeeName)
+                    .ToList();
 
-                using (var conn = new NpgsqlConnection(LoadDB.Connection_String))
+                comboEmployee.Items.Clear();
+                foreach (var name in employees)
                 {
-                    conn.Open();
-
-                    using (var cmd = new NpgsqlCommand(query, conn))
-                    {
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            comboEmployee.Items.Clear();
-
-                            while (reader.Read())
-                            {
-                                string employeeName = reader["employee_name"].ToString();
-                                comboEmployee.Items.Add(employeeName);
-                            }
-                        }
-                    }
+                    if (!string.IsNullOrEmpty(name))
+                        comboEmployee.Items.Add(name);
                 }
 
                 if (comboEmployee.Items.Count > 0)
-                {
                     comboEmployee.SelectedIndex = 0;
-                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при загрузке сотрудников: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Ошибка загрузки сотрудников: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -131,31 +168,24 @@ namespace PayrollHelper
         {
             try
             {
-                using (var conn = new NpgsqlConnection(LoadDB.Connection_String))
+                var bonuses = Program.dbContext.SalaryAndBonuses
+                    .Where(s => EF.Functions.ILike(s.PaymentType, "Премия%"))
+                    .Select(s => s.PaymentType)
+                    .ToList();
+
+                comboBonusType.Items.Clear();
+                foreach (var type in bonuses)
                 {
-                    conn.Open();
-                    string query = "SELECT payment_type FROM salary_and_bonuses WHERE payment_type ILIKE 'Премия%'";
-                    using (var cmd = new NpgsqlCommand(query, conn))
-                    {
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            comboBonusType.Items.Clear();
-                            while (reader.Read())
-                            {
-                                comboBonusType.Items.Add(reader["payment_type"].ToString());
-                            }
-                        }
-                    }
+                    if (!string.IsNullOrEmpty(type))
+                        comboBonusType.Items.Add(type);
                 }
 
                 if (comboBonusType.Items.Count > 0)
-                {
                     comboBonusType.SelectedIndex = 0;
-                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при загрузке видов премий: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Ошибка загрузки премий: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -163,319 +193,162 @@ namespace PayrollHelper
         {
             try
             {
+                string empName = comboEmployee.Text;
+                var employee = Program.dbContext.Employees
+                    .Include(e => e.PostNumberNavigation)
+                    .FirstOrDefault(e => e.EmployeeName == empName);
+
+                if (employee == null)
+                {
+                    MessageBox.Show("Сотрудник не выбран.");
+                    return;
+                }
+
+                DateOnly paymentDate = DateOnly.FromDateTime(DateTime.Now);
+
                 if (checkSpecialAmount.Checked)
                 {
-                    string FIO = comboEmployee.Text;
-                    double Special_Payment = Convert.ToDouble(textSpecialAmount.Text);
-                    double tax_rate = 0;
-
-                    DateTime paymentDate = DateTime.Now;
-
-                    string query = $"SELECT employee_id FROM employees WHERE employee_name='{FIO}'";
-                    string employeeId = "";
-
-                    using (var conn = new NpgsqlConnection(LoadDB.Connection_String))
+                    // СЦЕНАРИЙ: ОСОБАЯ СУММА
+                    if (!double.TryParse(textSpecialAmount.Text, out double specialAmount))
                     {
-                        conn.Open();
-
-                        using (var cmd = new NpgsqlCommand(query, conn))
-                        {
-                            using (var reader = cmd.ExecuteReader())
-                            {
-                                if (reader.Read())
-                                {
-                                    employeeId = reader["employee_id"].ToString();
-                                }
-                                else
-                                {
-                                    MessageBox.Show("Сотрудник не найден.");
-                                    return;
-                                }
-                            }
-                        }
-
-                        string taxQuery = "SELECT tax_rate FROM taxation WHERE tax_type='НДФЛ'";
-                        using (var cmd = new NpgsqlCommand(taxQuery, conn))
-                        {
-                            using (var reader = cmd.ExecuteReader())
-                            {
-                                if (reader.Read())
-                                {
-                                    tax_rate = Convert.ToDouble(reader["tax_rate"]);
-                                }
-                            }
-                        }
-
-                        Special_Payment = Math.Round(Special_Payment - (Special_Payment * tax_rate / 100), 2);
-
-                        query = $"INSERT INTO payments (payment_type, payment_amount, payment_date, employee_id) VALUES ('Специальная сумма', {Special_Payment}, '{paymentDate}', '{employeeId}')";
-
-                        using (var cmd = new NpgsqlCommand(query, conn))
-                        {
-                            cmd.ExecuteNonQuery();
-                        }
-
-                        MessageBox.Show("Специальная сумма успешно добавлена.");
+                        MessageBox.Show("Введите корректную числовую сумму.");
+                        return;
                     }
+
+                    var ndflTax = Program.dbContext.Taxations.FirstOrDefault(t => EF.Functions.ILike(t.TaxType, "НДФЛ"));
+                    double taxRate = (double)(ndflTax?.TaxRate ?? 0);
+                    double finalAmount = Math.Round(specialAmount - (specialAmount * taxRate / 100), 2);
+
+                    var p = new Payment { 
+                        PaymentType = "Специальная сумма", 
+                        PaymentAmount = (decimal)finalAmount, 
+                        PaymentDate = paymentDate, 
+                        EmployeeId = employee.EmployeeId 
+                    };
+                    Program.dbContext.Payments.Add(p);
+                    Program.dbContext.SaveChanges();
+                    MessageBox.Show($"Выплата специальной суммы ({finalAmount} руб.) успешно проведена.");
                 }
                 else
                 {
                     if (comboPaymentType.Text == "Зарплата")
                     {
-                        string employeeId = "";
-                        bool hasInsurance = false;
-                        string post_number = "";
-                        string post_name = "";
-                        double default_amount = 0;
-                        string taxQuery = "";
-                        string insuranceTaxQuery = "";
-                        double tax_rate = 0;
-                        double insuranceTaxRate = 0;
-                        double totalTaxRate = 0;
-                        double finalAmount = 0;
+                        // СЦЕНАРИЙ: ЗАРПЛАТА
+                        string postName = employee.PostNumberNavigation?.Name;
+                        var salaryInfo = Program.dbContext.SalaryAndBonuses
+                            .FirstOrDefault(s => EF.Functions.ILike(s.PaymentType, $"%{postName}%"))
+                            ?? Program.dbContext.SalaryAndBonuses.FirstOrDefault(s => EF.Functions.ILike(s.PaymentType, "Оклад"));
 
-                        string query = $"SELECT employee_id, post_number, insurance FROM employees WHERE employee_name='{comboEmployee.Text}'";
-                        string FIO = comboEmployee.Text;
-
-                        using (var conn = new NpgsqlConnection(LoadDB.Connection_String))
+                        if (salaryInfo == null)
                         {
-                            conn.Open();
-
-                            using (var cmd = new NpgsqlCommand(query, conn))
-                            {
-                                using (var reader = cmd.ExecuteReader())
-                                {
-                                    if (reader.Read())
-                                    {
-                                        employeeId = reader["employee_id"].ToString();
-                                        hasInsurance = reader["insurance"] != DBNull.Value && (bool)reader["insurance"];
-                                        post_number = reader["post_number"].ToString();
-                                    }
-                                    else
-                                    {
-                                        MessageBox.Show("Сотрудник не найден.");
-                                        return;
-                                    }
-                                }
-                            }
-
-                            query = $"SELECT name FROM positions WHERE id='{post_number}'";
-                            using (var cmd = new NpgsqlCommand(query, conn))
-                            {
-                                using (var reader = cmd.ExecuteReader())
-                                {
-                                    if (reader.Read())
-                                    {
-                                        post_name = reader["name"].ToString();
-                                    }
-                                }
-                            }
-
-                            query = $"SELECT default_amount FROM salary_and_bonuses WHERE payment_type ILIKE '%{post_name}%'";
-                            using (var cmd = new NpgsqlCommand(query, conn))
-                            {
-                                using (var reader = cmd.ExecuteReader())
-                                {
-                                    if (reader.Read())
-                                    {
-                                        default_amount = Convert.ToDouble(reader["default_amount"]);
-                                    }
-                                }
-                            }
-
-                            if (hasInsurance)
-                            {
-                                taxQuery = "SELECT tax_rate FROM taxation WHERE tax_type='НДФЛ'";
-                                using (var cmd = new NpgsqlCommand(taxQuery, conn))
-                                {
-                                    using (var reader = cmd.ExecuteReader())
-                                    {
-                                        if (reader.Read())
-                                        {
-                                            tax_rate = Convert.ToDouble(reader["tax_rate"]);
-                                        }
-                                    }
-                                }
-
-                                insuranceTaxQuery = "SELECT tax_rate FROM taxation WHERE tax_type='страховка'";
-                                using (var cmd = new NpgsqlCommand(insuranceTaxQuery, conn))
-                                {
-                                    using (var reader = cmd.ExecuteReader())
-                                    {
-                                        if (reader.Read())
-                                        {
-                                            insuranceTaxRate = Convert.ToDouble(reader["tax_rate"]);
-                                        }
-                                    }
-                                }
-
-                                totalTaxRate = tax_rate + insuranceTaxRate;
-                                finalAmount = Math.Round(default_amount - (default_amount * totalTaxRate / 100), 2);
-                            }
-                            else
-                            {
-                                taxQuery = "SELECT tax_rate FROM taxation WHERE tax_type='НДФЛ'";
-                                using (var cmd = new NpgsqlCommand(taxQuery, conn))
-                                {
-                                    using (var reader = cmd.ExecuteReader())
-                                    {
-                                        if (reader.Read())
-                                        {
-                                            tax_rate = Convert.ToDouble(reader["tax_rate"]);
-                                        }
-                                    }
-                                }
-
-                                finalAmount = Math.Round(default_amount - (default_amount * tax_rate / 100), 2);
-                            }
+                            MessageBox.Show("Ставка оклада не найдена в базе данных.");
+                            return;
                         }
 
-                        DateTime paymentDate = DateTime.Now;
-                        query = $"INSERT INTO payments (payment_type, payment_amount, payment_date, employee_id) VALUES ('{comboPaymentType.Text}', '{finalAmount}', '{paymentDate}', '{employeeId}')";
-                        using (var conn = new NpgsqlConnection(LoadDB.Connection_String))
+                        // Налоги
+                        var ndflTax = Program.dbContext.Taxations.FirstOrDefault(t => EF.Functions.ILike(t.TaxType, "НДФЛ"));
+                        double totalTaxRate = (double)(ndflTax?.TaxRate ?? 0);
+
+                        if (employee.Insurance == true)
                         {
-                            conn.Open();
-                            using (var cmd = new NpgsqlCommand(query, conn))
-                            {
-                                cmd.ExecuteNonQuery();
-                            }
+                            var insTax = Program.dbContext.Taxations.FirstOrDefault(t => EF.Functions.ILike(t.TaxType, "%страхов%"));
+                            totalTaxRate += (double)(insTax?.TaxRate ?? 0);
                         }
 
-                        MessageBox.Show("Выплата зарплаты успешно добавлена.");
+                        double baseAmount = (double)(salaryInfo.DefaultAmount ?? 0);
+                        double finalAmount = Math.Round(baseAmount - (baseAmount * totalTaxRate / 100), 2);
+
+                        var p = new Payment { 
+                            PaymentType = "Зарплата", 
+                            PaymentAmount = (decimal)finalAmount, 
+                            PaymentDate = paymentDate, 
+                            EmployeeId = employee.EmployeeId 
+                        };
+                        Program.dbContext.Payments.Add(p);
+                        Program.dbContext.SaveChanges();
+                        MessageBox.Show($"Зарплата ({finalAmount} руб.) начислена сотруднику {empName}.");
                     }
                     else if (comboPaymentType.Text == "Премия")
                     {
-                        string FIO = comboEmployee.Text;
-                        string Bonus_Type = comboBonusType.Text;
-                        string employeeId = "";
-                        double bonusAmount = 0;
-
-                        string query = $"SELECT employee_id FROM employees WHERE employee_name='{FIO}'";
-                        using (var conn = new NpgsqlConnection(LoadDB.Connection_String))
+                        // СЦЕНАРИЙ: ПРЕМИЯ
+                        var bonusInfo = Program.dbContext.SalaryAndBonuses.FirstOrDefault(s => s.PaymentType == comboBonusType.Text);
+                        if (bonusInfo == null)
                         {
-                            conn.Open();
-
-                            using (var cmd = new NpgsqlCommand(query, conn))
-                            {
-                                using (var reader = cmd.ExecuteReader())
-                                {
-                                    if (reader.Read())
-                                    {
-                                        employeeId = reader["employee_id"].ToString();
-                                    }
-                                    else
-                                    {
-                                        MessageBox.Show("Сотрудник не найден.");
-                                        return;
-                                    }
-                                }
-                            }
-
-                            query = $"SELECT default_amount FROM salary_and_bonuses WHERE payment_type ILIKE '%{Bonus_Type}%'";
-                            using (var cmd = new NpgsqlCommand(query, conn))
-                            {
-                                using (var reader = cmd.ExecuteReader())
-                                {
-                                    if (reader.Read())
-                                    {
-                                        bonusAmount = Convert.ToDouble(reader["default_amount"]);
-                                    }
-                                    else
-                                    {
-                                        MessageBox.Show("Вид премии не найден.");
-                                        return;
-                                    }
-                                }
-                            }
-
-                            DateTime paymentDate = DateTime.Now;
-                            query = $"INSERT INTO payments (payment_type, payment_amount, payment_date, employee_id) VALUES ('Премия', {bonusAmount}, '{paymentDate}', '{employeeId}')";
-                            using (var cmd = new NpgsqlCommand(query, conn))
-                            {
-                                cmd.ExecuteNonQuery();
-                            }
-
-                            MessageBox.Show("Премия успешно добавлена.");
+                            MessageBox.Show("Вид премии не найден.");
+                            return;
                         }
+
+                        var p = new Payment { 
+                            PaymentType = "Премия", 
+                            PaymentAmount = bonusInfo.DefaultAmount ?? 0, 
+                            PaymentDate = paymentDate, 
+                            EmployeeId = employee.EmployeeId 
+                        };
+                        Program.dbContext.Payments.Add(p);
+                        Program.dbContext.SaveChanges();
+                        MessageBox.Show($"Премия ({bonusInfo.DefaultAmount ?? 0} руб.) успешно начислена.");
                     }
                 }
             }
-            catch (FormatException ex)
-            {
-                MessageBox.Show("Ошибка: Убедитесь, что сумма введена в правильном формате.\n" + ex.Message);
-            }
-            catch (NpgsqlException ex)
-            {
-                MessageBox.Show("Ошибка базы данных: " + ex.Message);
-            }
             catch (Exception ex)
             {
-                MessageBox.Show($"Произошла ошибка: {ex.Message}");
+                MessageBox.Show($"Ошибка при выполнении выплаты: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
                 textSpecialAmount.Clear();
                 checkSpecialAmount.Checked = false;
-                GC.Collect();
-                MessageBox.Show("Операция завершена.");
             }
         }
 
+        // ==========================================================
+        // УПРАВЛЕНИЕ ИНТЕРФЕЙСОМ
+        // ==========================================================
+
         private void checkSpecialAmount_CheckedChanged(object sender, EventArgs e)
         {
-            try
+            bool isSpecial = checkSpecialAmount.Checked;
+            textSpecialAmount.Visible = isSpecial;
+            textSpecialAmount.Enabled = isSpecial;
+            
+            // Скрываем/показываем обычный выбор типа оплаты
+            comboPaymentType.Visible = !isSpecial;
+            comboPaymentType.Enabled = !isSpecial;
+            label1.Visible = !isSpecial;
+
+            if (isSpecial)
             {
-                if (checkSpecialAmount.Checked)
-                {
-                    textSpecialAmount.Visible = true;
-                    textSpecialAmount.Enabled = true;
-                    comboPaymentType.Visible = false;
-                    comboPaymentType.Enabled = false;
-                    label1.Visible = false;
-                }
-                else
-                {
-                    textSpecialAmount.Visible = false;
-                    textSpecialAmount.Enabled = false;
-                    comboPaymentType.Visible = true;
-                    comboPaymentType.Enabled = true;
-                    label1.Visible = true;
-                }
+                comboBonusType.Visible = false;
+                label2.Visible = false; // Используем label2 (Вид премии)
             }
-            catch (Exception ex)
+            else
             {
-                MessageBox.Show($"Произошла ошибка: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // Восстанавливаем видимость премии, если она была выбрана до этого
+                comboPaymentType_SelectedIndexChanged(null, null);
             }
         }
 
         private void comboPaymentType_SelectedIndexChanged(object sender, EventArgs e)
         {
-            try
-            {
-                if (comboPaymentType.SelectedIndex == 0)
-                {
-                    comboBonusType.Visible = false;
-                    comboBonusType.Enabled = false;
-                    label7.Visible = false;
-                }
-                else if (comboPaymentType.SelectedIndex == 1)
-                {
-                    comboBonusType.Visible = true;
-                    comboBonusType.Enabled = true;
-                    label7.Visible = true;
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Произошла ошибка при изменении типа оплаты: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            // Показываем выбор вида премии только если выбрана "Премия"
+            bool isBonus = comboPaymentType.Text == "Премия";
+            comboBonusType.Visible = isBonus;
+            comboBonusType.Enabled = isBonus;
+            label2.Visible = isBonus; // Используем label2 (Вид премии)
         }
 
         private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            LoadPostInComboBox();
-            LoadEmployees();
-            LoadBonusTypes();
+            // Обновляем данные в зависимости от активной вкладки
+            if (tabControl1.SelectedIndex == 0) // Выплаты
+            {
+                LoadEmployees();
+                LoadBonusTypes();
+            }
+            else if (tabControl1.SelectedIndex == 1) // Новый сотрудник
+            {
+                LoadPostInComboBox();
+            }
         }
     }
 }

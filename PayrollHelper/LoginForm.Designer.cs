@@ -72,7 +72,9 @@
             Controls.Add(loginButton);
             Controls.Add(passwordTextBox);
             Controls.Add(usernameTextBox);
-            FormBorderStyle = FormBorderStyle.Fixed3D;
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            MaximizeBox = false;
+            MinimizeBox = false;
             Name = "LoginForm";
             RightToLeft = RightToLeft.No;
             StartPosition = FormStartPosition.CenterScreen;

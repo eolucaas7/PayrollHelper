@@ -23,19 +23,25 @@ namespace PayrollHelper
 
         private void buttonDashBoard_Click(object sender, EventArgs e)
         {
+            this.Hide();
             DashBoardForm dashboardForm = new DashBoardForm();
+            dashboardForm.FormClosed += (s, args) => this.Show();
             dashboardForm.ShowDialog();
         }
 
         private void buttonEditDatabase_Click(object sender, EventArgs e)
         {
+            this.Hide();
             EditDatasBaseForm editDatabaseForm = new EditDatasBaseForm();
+            editDatabaseForm.FormClosed += (s, args) => this.Show();
             editDatabaseForm.ShowDialog();
         }
 
         private void buttonReport_Click(object sender, EventArgs e)
         {
+            this.Hide();    
             ReportsForm reportsForm = new ReportsForm();
+            reportsForm.FormClosed += (s, args) => this.Show();
             reportsForm.ShowDialog();
         }
     }

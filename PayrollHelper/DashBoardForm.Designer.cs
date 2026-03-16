@@ -183,7 +183,7 @@
             tabPage2.Padding = new Padding(3);
             tabPage2.Size = new Size(332, 256);
             tabPage2.TabIndex = 1;
-            tabPage2.Text = "Выплаты";
+            tabPage2.Text = "Новый сотрудник";
             tabPage2.UseVisualStyleBackColor = true;
             // 
             // buttonAddEmployee
@@ -278,8 +278,11 @@
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(373, 318);
             Controls.Add(tabControl1);
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            MaximizeBox = false;
             Name = "DashBoardForm";
-            Text = "DashBoardForm";
+            StartPosition = FormStartPosition.CenterParent;
+            Text = "Рабочее пространство";
             tabControl1.ResumeLayout(false);
             tabPage1.ResumeLayout(false);
             tabPage1.PerformLayout();

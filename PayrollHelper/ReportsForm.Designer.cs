@@ -125,7 +125,10 @@
             Controls.Add(lblCurrentPath);
             Controls.Add(label2);
             Controls.Add(label1);
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            MaximizeBox = false;
             Name = "ReportsForm";
+            StartPosition = FormStartPosition.CenterParent;
             Text = "Формирование отчетов";
             ResumeLayout(false);
             PerformLayout();

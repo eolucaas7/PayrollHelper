@@ -1,4 +1,3 @@
-using Npgsql;
 using System;
 using PayrollHelper.Properties;
 using System.Collections.Generic;

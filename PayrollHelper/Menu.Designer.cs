@@ -74,7 +74,11 @@
             Controls.Add(buttonReport);
             Controls.Add(buttonEditDatabase);
             Controls.Add(buttonDashBoard);
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            MaximizeBox = false;
+            MinimizeBox = false;
             Name = "Menu";
+            StartPosition = FormStartPosition.CenterScreen;
             Text = "Меню";
             ResumeLayout(false);
         }

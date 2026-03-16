@@ -1,4 +1,3 @@
-﻿using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -8,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Microsoft.EntityFrameworkCore;
+using PayrollHelper.Models;
 
 namespace PayrollHelper
 {
@@ -26,79 +27,95 @@ namespace PayrollHelper
             {
                 string selectedTable = tableSelectorComboBox.Text.Trim();
 
-                if (string.IsNullOrEmpty(selectedTable))
+                if (string.IsNullOrEmpty(selectedTable) || selectedTable == "Выберите таблицу для редактирования")
                 {
-                    MessageBox.Show("Пожалуйста, выберите таблицу для отображения.", "Предупреждение", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
-                List<string> allowedTables = new List<string> { "positions", "employees", "payments", "salary_and_bonuses", "taxation" };
+                // Очистка привязки перед новой загрузкой
+                dataGridView1.DataSource = null;
+                dataGridView1.Columns.Clear();
 
-                if (!allowedTables.Contains(selectedTable))
+                switch (selectedTable)
                 {
-                    MessageBox.Show("Выбрана недопустимая таблица.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
+                    case "employees":
+                        Program.dbContext.Employees.Load();
+                        dataGridView1.DataSource = Program.dbContext.Employees.Local.ToBindingList();
+                        break;
+                    case "positions":
+                        Program.dbContext.Positions.Load();
+                        dataGridView1.DataSource = Program.dbContext.Positions.Local.ToBindingList();
+                        break;
+                    case "payments":
+                        Program.dbContext.Payments.Load();
+                        dataGridView1.DataSource = Program.dbContext.Payments.Local.ToBindingList();
+                        break;
+                    case "salary_and_bonuses":
+                        Program.dbContext.SalaryAndBonuses.Load();
+                        dataGridView1.DataSource = Program.dbContext.SalaryAndBonuses.Local.ToBindingList();
+                        break;
+                    case "taxation":
+                        Program.dbContext.Taxations.Load();
+                        dataGridView1.DataSource = Program.dbContext.Taxations.Local.ToBindingList();
+                        break;
+                    default:
+                        MessageBox.Show("Выбрана недопустимая таблица.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
                 }
 
-                string query = $"SELECT * FROM {selectedTable}";
-
-                using (var conn = new NpgsqlConnection(LoadDB.Connection_String))
-                {
-                    conn.Open();
-
-                    using (var cmd = new NpgsqlCommand(query, conn))
-                    {
-                        NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd);
-                        DataTable dt = new DataTable();
-                        da.Fill(dt);
-
-                        dataGridView1.DataSource = null;
-                        dataGridView1.Rows.Clear();
-                        dataGridView1.DataSource = dt;
-                    }
-                }
+                // Скрываем навигационные свойства, чтобы они не отображались в GridView
+                HideNavigationProperties();
+                
+                // Настраиваем названия колонок для красоты (опционально)
+                SetReadableHeaders();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при загрузке данных в таблицу: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Ошибка при загрузке данных: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void HideNavigationProperties()
+        {
+            foreach (DataGridViewColumn col in dataGridView1.Columns)
+            {
+                // Скрываем колонки, которые являются коллекциями или другими сущностями
+                if (col.Name.EndsWith("Navigation") || 
+                    col.Name == "Payments" || 
+                    col.Name == "Employees" || 
+                    col.Name == "Taxations" || 
+                    col.Name == "SalaryAndBonuses" || 
+                    col.Name == "Employee")
+                {
+                    col.Visible = false;
+                }
+                
+                // ID колонки делаем только для чтения
+                if (col.Name.ToLower().Contains("id"))
+                {
+                    col.ReadOnly = true;
+                }
+            }
+        }
+
+        private void SetReadableHeaders()
+        {
+            // Здесь можно переименовать заголовки колонок, если нужно
+            // Например: if (dataGridView1.Columns.Contains("EmployeeName")) dataGridView1.Columns["EmployeeName"].HeaderText = "ФИО";
         }
 
         private void LoadTablesIntoComboBox()
         {
-            try
+            tableSelectorComboBox.Items.Clear();
+            tableSelectorComboBox.Items.Add("employees");
+            tableSelectorComboBox.Items.Add("payments");
+            tableSelectorComboBox.Items.Add("positions");
+            tableSelectorComboBox.Items.Add("salary_and_bonuses");
+            tableSelectorComboBox.Items.Add("taxation");
+
+            if (tableSelectorComboBox.Items.Count > 0)
             {
-                string[] tables = new string[] { "positions", "employees", "payments", "salary_and_bonuses", "taxation" };
-
-                using (var conn = new NpgsqlConnection(LoadDB.Connection_String))
-                {
-                    conn.Open();
-
-                    foreach (var table in tables)
-                    {
-                        string query = $"SELECT '{table}' as table_name";
-                        using (var cmd = new NpgsqlCommand(query, conn))
-                        {
-                            using (var reader = cmd.ExecuteReader())
-                            {
-                                while (reader.Read())
-                                {
-                                    string tableName = reader["table_name"].ToString();
-                                    tableSelectorComboBox.Items.Add(tableName);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (tableSelectorComboBox.Items.Count > 0)
-                {
-                    tableSelectorComboBox.SelectedIndex = 0;
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка при загрузке списка таблиц: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                tableSelectorComboBox.SelectedIndex = 0;
             }
         }
 
@@ -106,25 +123,11 @@ namespace PayrollHelper
         {
             try
             {
-                string query = "SELECT employee_name FROM employees";
-
-                using (var conn = new NpgsqlConnection(LoadDB.Connection_String))
+                comboBoxEmployeeName.Items.Clear();
+                var employees = Program.dbContext.Employees.Select(e => e.EmployeeName).ToList();
+                foreach (var name in employees)
                 {
-                    conn.Open();
-
-                    using (var cmd = new NpgsqlCommand(query, conn))
-                    {
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            comboBoxEmployeeName.Items.Clear();
-
-                            while (reader.Read())
-                            {
-                                string employeeName = reader["employee_name"].ToString();
-                                comboBoxEmployeeName.Items.Add(employeeName);
-                            }
-                        }
-                    }
+                    comboBoxEmployeeName.Items.Add(name);
                 }
 
                 if (comboBoxEmployeeName.Items.Count > 0)
@@ -140,23 +143,8 @@ namespace PayrollHelper
 
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-            try
-            {
-                int column = dataGridView1.SelectedCells[0].ColumnIndex;
-                int row = dataGridView1.SelectedCells[0].RowIndex;
-
-                if (dataGridView1.Columns[dataGridView1.CurrentCell.ColumnIndex].HeaderText.ToString() == "payment_id" ||
-                    dataGridView1.Columns[dataGridView1.CurrentCell.ColumnIndex].HeaderText.ToString() == "id")
-
-                {
-                    MessageBox.Show("Столбец нельзя редактировать!");
-                    dataGridView1.Rows[dataGridView1.CurrentCell.RowIndex].Cells[dataGridView1.CurrentCell.ColumnIndex + 1].Selected = true;
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Произошла ошибка при редактировании ячейки: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            // В EF Core версии этот метод можно оставить пустым или удалить, 
+            // так как мы установили ReadOnly для ID колонок в HideNavigationProperties
         }
 
         private void tableSelectorComboBox_SelectedIndexChanged(object sender, EventArgs e)
@@ -168,47 +156,15 @@ namespace PayrollHelper
         {
             try
             {
-                string query = $"SELECT * FROM {tableSelectorComboBox.Text}";
-
-                using (var conn = new NpgsqlConnection(LoadDB.Connection_String))
-                {
-                    conn.Open();
-                    using (var cmd = new NpgsqlCommand(query, conn))
-                    {
-                        NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd);
-                        NpgsqlCommandBuilder builder = new NpgsqlCommandBuilder(da);
-
-                        DataTable dt = (DataTable)dataGridView1.DataSource;
-
-                        foreach (DataRow row in dt.Rows)
-                        {
-                            if (row.RowState == DataRowState.Added)
-                            {
-                                if (row.Table.Columns.Contains("id"))
-                                    row["id"] = DBNull.Value;
-
-                                if (row.Table.Columns.Contains("payment_id"))
-                                    row["payment_id"] = DBNull.Value;
-
-                                if (row.Table.Columns.Contains("salary_and_bonuses_id"))
-                                    row["salary_and_bonuses_id"] = DBNull.Value;
-
-                                if (row.Table.Columns.Contains("taxation_id"))
-                                    row["taxation_id"] = DBNull.Value;
-                            }
-                        }
-
-                        da.Update(dt);
-                    }
-                }
-
-                MessageBox.Show("Изменения сохранены в базе данных!");
-
+                Program.dbContext.SaveChanges();
+                MessageBox.Show("Изменения успешно сохранены в базе данных!");
                 LoadDataIntoGridView();
+                LoadEmployees(); // На случай, если имена сотрудников изменились
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка ввода данных: {ex.Message}");
+                MessageBox.Show($"Ошибка при сохранении данных: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // В случае ошибки лучше перезагрузить данные, чтобы синхронизироваться с БД
                 LoadDataIntoGridView();
             }
         }
@@ -219,166 +175,61 @@ namespace PayrollHelper
             {
                 if (dataGridView1.SelectedRows.Count > 0)
                 {
-                    string tableName = tableSelectorComboBox.Text;
-                    string idColumn = GetIdColumnForTable(tableName);
+                    var item = dataGridView1.SelectedRows[0].DataBoundItem;
+                    if (item == null) return;
 
-                    if (idColumn == null)
+                    var confirmResult = MessageBox.Show("Вы уверены, что хотите удалить выбранную строку?", 
+                                                       "Подтверждение удаления", 
+                                                       MessageBoxButtons.YesNo, 
+                                                       MessageBoxIcon.Question);
+                    
+                    if (confirmResult == DialogResult.Yes)
                     {
-                        MessageBox.Show("Не удалось определить ключевую колонку для таблицы.");
-                        return;
-                    }
+                        string selectedTable = tableSelectorComboBox.Text.Trim();
 
-                    int id = Convert.ToInt32(dataGridView1.SelectedRows[0].Cells[idColumn].Value);
-
-                    using (var conn = new NpgsqlConnection(LoadDB.Connection_String))
-                    {
-                        conn.Open();
-
-                        if (tableName == "employees")
+                        if (selectedTable == "employees")
                         {
-                            DeleteEmployee(id);
-                            comboBoxEmployeeName.Items.Clear();
+                            var employee = (Employee)item;
+                            // Ручное удаление связанных выплат, так как в БД настроено ClientSetNull
+                            var payments = Program.dbContext.Payments.Where(p => p.EmployeeId == employee.EmployeeId).ToList();
+                            Program.dbContext.Payments.RemoveRange(payments);
+                            Program.dbContext.Employees.Remove(employee);
+                        }
+                        else if (selectedTable == "positions")
+                        {
+                            Program.dbContext.Positions.Remove((Position)item);
+                        }
+                        else if (selectedTable == "payments")
+                        {
+                            Program.dbContext.Payments.Remove((Payment)item);
+                        }
+                        else if (selectedTable == "salary_and_bonuses")
+                        {
+                            Program.dbContext.SalaryAndBonuses.Remove((SalaryAndBonus)item);
+                        }
+                        else if (selectedTable == "taxation")
+                        {
+                            Program.dbContext.Taxations.Remove((Taxation)item);
+                        }
+
+                        Program.dbContext.SaveChanges();
+                        MessageBox.Show("Строка успешно удалена!");
+                        
+                        if (selectedTable == "employees")
                             LoadEmployees();
-                        }
-                        else if (tableName == "positions")
-                        {
-                            DeletePosition(id);
-                        }
-                        else if (tableName == "payments")
-                        {
-                            DeletePayment(id);
-                        }
-                        else if (tableName == "salary_and_bonuses")
-                        {
-                            DeleteSalaryAndBonus(id);
-                        }
-                        else if (tableName == "taxation")
-                        {
-                            DeleteTaxation(id);
-                        }
-                        else
-                        {
-                            MessageBox.Show("Неизвестная таблица для удаления.");
-                            return;
-                        }
+                        
+                        LoadDataIntoGridView();
                     }
-
-                    dataGridView1.Rows.RemoveAt(dataGridView1.SelectedRows[0].Index);
-                    MessageBox.Show("Строка успешно удалена!");
                 }
                 else
                 {
-                    MessageBox.Show("Пожалуйста, выберите строку для удаления");
+                    MessageBox.Show("Пожалуйста, выберите всю строку (выделите строку слева), чтобы удалить её.", "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка: {ex.Message}");
-                MessageBox.Show($"Произошла ошибка при удалении: {ex.Message}");
-            }
-        }
-
-        private void DeleteEmployee(int employeeId)
-        {
-            try
-            {
-                using (var conn = new NpgsqlConnection(LoadDB.Connection_String))
-                {
-                    conn.Open();
-
-                    string deletePaymentsQuery = "DELETE FROM payments WHERE employee_id = @employee_id";
-                    using (var cmd = new NpgsqlCommand(deletePaymentsQuery, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@employee_id", employeeId);
-                        cmd.ExecuteNonQuery();
-                    }
-
-                    string deleteEmployeeQuery = "DELETE FROM employees WHERE employee_id = @employee_id";
-                    using (var cmd = new NpgsqlCommand(deleteEmployeeQuery, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@employee_id", employeeId);
-                        cmd.ExecuteNonQuery();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка при удалении сотрудника: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private void DeletePosition(int positionId)
-        {
-            using (var conn = new NpgsqlConnection(LoadDB.Connection_String))
-            {
-                conn.Open();
-                string deletePositionQuery = "DELETE FROM positions WHERE id = @id";
-                using (var cmd = new NpgsqlCommand(deletePositionQuery, conn))
-                {
-                    cmd.Parameters.AddWithValue("@id", positionId);
-                    cmd.ExecuteNonQuery();
-                }
-            }
-        }
-
-        private void DeletePayment(int paymentId)
-        {
-            using (var conn = new NpgsqlConnection(LoadDB.Connection_String))
-            {
-                conn.Open();
-                string deletePaymentQuery = "DELETE FROM payments WHERE payment_id = @payment_id";
-                using (var cmd = new NpgsqlCommand(deletePaymentQuery, conn))
-                {
-                    cmd.Parameters.AddWithValue("@payment_id", paymentId);
-                    cmd.ExecuteNonQuery();
-                }
-            }
-        }
-
-        private void DeleteSalaryAndBonus(int id)
-        {
-            using (var conn = new NpgsqlConnection(LoadDB.Connection_String))
-            {
-                conn.Open();
-                string deleteSalaryAndBonusQuery = "DELETE FROM salary_and_bonuses WHERE id = @id";
-                using (var cmd = new NpgsqlCommand(deleteSalaryAndBonusQuery, conn))
-                {
-                    cmd.Parameters.AddWithValue("@id", id);
-                    cmd.ExecuteNonQuery();
-                }
-            }
-        }
-
-        private void DeleteTaxation(int id)
-        {
-            using (var conn = new NpgsqlConnection(LoadDB.Connection_String))
-            {
-                conn.Open();
-                string deleteTaxationQuery = "DELETE FROM taxation WHERE id = @id";
-                using (var cmd = new NpgsqlCommand(deleteTaxationQuery, conn))
-                {
-                    cmd.Parameters.AddWithValue("@id", id);
-                    cmd.ExecuteNonQuery();
-                }
-            }
-        }
-
-        private string GetIdColumnForTable(string tableName)
-        {
-            switch (tableName)
-            {
-                case "employees":
-                    return "employee_id";
-                case "positions":
-                    return "id";
-                case "payments":
-                    return "payment_id";
-                case "salary_and_bonuses":
-                    return "id";
-                case "taxation":
-                    return "id";
-                default:
-                    return null;
+                MessageBox.Show($"Ошибка при удалении: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                LoadDataIntoGridView();
             }
         }
 
@@ -393,43 +244,23 @@ namespace PayrollHelper
                 }
 
                 string employeeName = comboBoxEmployeeName.SelectedItem.ToString();
+                var employee = Program.dbContext.Employees.FirstOrDefault(e => e.EmployeeName == employeeName);
 
-                string query = "SELECT * FROM employees WHERE employee_name = @employee_name";
-
-                using (var conn = new NpgsqlConnection(LoadDB.Connection_String))
+                if (employee != null)
                 {
-                    conn.Open();
+                    string message = $"Информация о сотруднике:\n" +
+                                     $"ID: {employee.EmployeeId}\n" +
+                                     $"Имя: {employee.EmployeeName}\n" +
+                                     $"Телефон: {employee.PhoneNumber}\n" +
+                                     $"Адрес: {employee.Address}\n" +
+                                     $"Страхование: {(employee.Insurance == true ? "Есть" : "Нет")}\n" +
+                                     $"Номер должности: {employee.PostNumber}";
 
-                    using (var cmd = new NpgsqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@employee_name", employeeName);
-
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                string employeeId = reader["employee_id"].ToString();
-                                string phoneNumber = reader["phone_number"].ToString();
-                                string address = reader["address"].ToString();
-                                bool insurance = Convert.ToBoolean(reader["insurance"]);
-                                int postNumber = Convert.ToInt32(reader["post_number"]);
-
-                                string message = $"Информация о сотруднике:\n" +
-                                                 $"ID: {employeeId}\n" +
-                                                 $"Имя: {employeeName}\n" +
-                                                 $"Телефон: {phoneNumber}\n" +
-                                                 $"Адрес: {address}\n" +
-                                                 $"Страхование: {(insurance ? "Есть" : "Нет")}\n" +
-                                                 $"Номер должности: {postNumber}";
-
-                                MessageBox.Show(message, "Информация о сотруднике");
-                            }
-                            else
-                            {
-                                MessageBox.Show("Сотрудник не найден.");
-                            }
-                        }
-                    }
+                    MessageBox.Show(message, "Информация о сотруднике");
+                }
+                else
+                {
+                    MessageBox.Show("Сотрудник не найден.");
                 }
             }
             catch (Exception ex)
@@ -440,47 +271,16 @@ namespace PayrollHelper
 
         private void comboBoxEmployeeName_SelectedIndexChanged(object sender, EventArgs e)
         {
-            try
-            {
-                string employeeName = comboBoxEmployeeName.Text;
-
-                if (string.IsNullOrEmpty(employeeName))
-                {
-                    MessageBox.Show("Выберите сотрудника.");
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка при загрузке информации о сотруднике: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            // Можно добавить логику, если нужно что-то делать при смене сотрудника
         }
 
         private void refreshButton_Click(object sender, EventArgs e)
         {
-            try
-            {
-                string selectedTable = tableSelectorComboBox.Text.Trim();
-
-                if (string.IsNullOrEmpty(selectedTable))
-                {
-                    MessageBox.Show("Пожалуйста, выберите таблицу для отображения.", "Предупреждение", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-
-                List<string> allowedTables = new List<string> { "positions", "employees", "payments", "salary_and_bonuses", "taxation" };
-
-                if (!allowedTables.Contains(selectedTable))
-                {
-                    MessageBox.Show("Выбрана недопустимая таблица.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-
-                LoadDataIntoGridView();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка при обновлении данных: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            // Для полного обновления сбрасываем локальные изменения и загружаем заново
+            // В простом случае просто вызываем LoadDataIntoGridView
+            LoadDataIntoGridView();
+            LoadEmployees();
+            MessageBox.Show("Данные обновлены.", "Инфо", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 }

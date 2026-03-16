@@ -124,7 +124,10 @@
             Controls.Add(comboBoxEmployeeName);
             Controls.Add(tableSelectorComboBox);
             Controls.Add(saveButton);
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            MaximizeBox = false;
             Name = "EditDatasBaseForm";
+            StartPosition = FormStartPosition.CenterParent;
             Text = "Редактирование/Просмотр Базы Данных";
             ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
             ResumeLayout(false);
