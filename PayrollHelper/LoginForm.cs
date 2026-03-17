@@ -20,6 +20,8 @@ namespace PayrollHelper
             InitializeComponent();
             InitializeUsersFile();
 
+            this.AcceptButton = this.loginButton;
+
             usernameTextBox.Enter += usernameTextBox_Enter;
             usernameTextBox.Leave += usernameTextBox_Leave;
             passwordTextBox.Enter += passwordTextBox_Enter;

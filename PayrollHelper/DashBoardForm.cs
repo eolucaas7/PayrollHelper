@@ -23,10 +23,10 @@ namespace PayrollHelper
                 return;
 
             // 1. УСТАНОВКА ИМЕН ВКЛАДОК
-            if (tabControl1.TabPages.Count >= 2)
+            if (tabControl.TabPages.Count >= 2)
             {
-                tabControl1.TabPages[0].Text = "Выплаты";
-                tabControl1.TabPages[1].Text = "Новый сотрудник";
+                tabControl.TabPages[0].Text = "Выплаты";
+                tabControl.TabPages[1].Text = "Новый сотрудник";
             }
 
             // 2. ИНИЦИАЛИЗАЦИЯ КОМБОБОКСА ТИПОВ ВЫПЛАТ
@@ -37,7 +37,7 @@ namespace PayrollHelper
 
             // Настройка начальной видимости элементов на вкладке "Выплаты"
             comboBonusType.Visible = false;
-            label2.Visible = false; // label2 - это "Вид премии", а не label7!
+            lblBonusType.Visible = false; // label2 - это "Вид премии", а не label7!
             textSpecialAmount.Visible = false;
 
             try
@@ -314,12 +314,12 @@ namespace PayrollHelper
             // Скрываем/показываем обычный выбор типа оплаты
             comboPaymentType.Visible = !isSpecial;
             comboPaymentType.Enabled = !isSpecial;
-            label1.Visible = !isSpecial;
+            lblPaymentType.Visible = !isSpecial;
 
             if (isSpecial)
             {
                 comboBonusType.Visible = false;
-                label2.Visible = false; // Используем label2 (Вид премии)
+                lblBonusType.Visible = false; // Используем label2 (Вид премии)
             }
             else
             {
@@ -334,18 +334,18 @@ namespace PayrollHelper
             bool isBonus = comboPaymentType.Text == "Премия";
             comboBonusType.Visible = isBonus;
             comboBonusType.Enabled = isBonus;
-            label2.Visible = isBonus; // Используем label2 (Вид премии)
+            lblBonusType.Visible = isBonus; // Используем label2 (Вид премии)
         }
 
         private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
         {
             // Обновляем данные в зависимости от активной вкладки
-            if (tabControl1.SelectedIndex == 0) // Выплаты
+            if (tabControl.SelectedIndex == 0) // Выплаты
             {
                 LoadEmployees();
                 LoadBonusTypes();
             }
-            else if (tabControl1.SelectedIndex == 1) // Новый сотрудник
+            else if (tabControl.SelectedIndex == 1) // Новый сотрудник
             {
                 LoadPostInComboBox();
             }

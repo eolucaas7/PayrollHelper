@@ -28,121 +28,144 @@
         /// </summary>
         private void InitializeComponent()
         {
-            label1 = new Label();
-            label2 = new Label();
+            lblReportType = new Label();
+            lblSelectDate = new Label();
             lblCurrentPath = new Label();
             reportTypeComboBox = new ComboBox();
-            dateTimePicker1 = new DateTimePicker();
+            dtpReportDate = new DateTimePicker();
             btnSelectReportFolder = new Button();
             generateAndExportButton = new Button();
             includeBonusesCheckBox = new CheckBox();
+            lblDirectory = new Label();
             SuspendLayout();
             // 
-            // label1
+            // lblReportType
             // 
-            label1.AutoSize = true;
-            label1.Location = new Point(12, 9);
-            label1.Name = "label1";
-            label1.Size = new Size(69, 15);
-            label1.TabIndex = 0;
-            label1.Text = "Тип отчета:";
+            lblReportType.FlatStyle = FlatStyle.Flat;
+            lblReportType.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point);
+            lblReportType.Location = new Point(12, 9);
+            lblReportType.Name = "lblReportType";
+            lblReportType.Size = new Size(86, 15);
+            lblReportType.TabIndex = 0;
+            lblReportType.Text = "Вид отчета:";
+            lblReportType.TextAlign = ContentAlignment.MiddleRight;
             // 
-            // label2
+            // lblSelectDate
             // 
-            label2.AutoSize = true;
-            label2.Location = new Point(12, 57);
-            label2.Name = "label2";
-            label2.Size = new Size(100, 15);
-            label2.TabIndex = 1;
-            label2.Text = "Дата отчетности:";
+            lblSelectDate.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point);
+            lblSelectDate.Location = new Point(8, 50);
+            lblSelectDate.Name = "lblSelectDate";
+            lblSelectDate.Size = new Size(108, 23);
+            lblSelectDate.TabIndex = 1;
+            lblSelectDate.Text = "Выберите дату:";
+            lblSelectDate.TextAlign = ContentAlignment.MiddleRight;
             // 
             // lblCurrentPath
             // 
-            lblCurrentPath.AutoSize = true;
-            lblCurrentPath.Location = new Point(12, 129);
+            lblCurrentPath.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point);
+            lblCurrentPath.Location = new Point(104, 116);
             lblCurrentPath.Name = "lblCurrentPath";
-            lblCurrentPath.Size = new Size(189, 15);
+            lblCurrentPath.Size = new Size(178, 25);
             lblCurrentPath.TabIndex = 2;
-            lblCurrentPath.Text = "Текущие расположение отчетов:";
+            lblCurrentPath.Text = "Текущий путь к отчетам:";
+            lblCurrentPath.TextAlign = ContentAlignment.MiddleRight;
             // 
             // reportTypeComboBox
             // 
+            reportTypeComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
             reportTypeComboBox.FormattingEnabled = true;
-            reportTypeComboBox.Location = new Point(113, 9);
+            reportTypeComboBox.Location = new Point(122, 12);
             reportTypeComboBox.Name = "reportTypeComboBox";
-            reportTypeComboBox.Size = new Size(262, 23);
+            reportTypeComboBox.Size = new Size(200, 23);
             reportTypeComboBox.TabIndex = 3;
             // 
-            // dateTimePicker1
+            // dtpReportDate
             // 
-            dateTimePicker1.Location = new Point(129, 51);
-            dateTimePicker1.Name = "dateTimePicker1";
-            dateTimePicker1.Size = new Size(200, 23);
-            dateTimePicker1.TabIndex = 4;
+            dtpReportDate.Format = DateTimePickerFormat.Short;
+            dtpReportDate.Location = new Point(122, 49);
+            dtpReportDate.Name = "dtpReportDate";
+            dtpReportDate.Size = new Size(200, 23);
+            dtpReportDate.TabIndex = 4;
             // 
             // btnSelectReportFolder
             // 
-            btnSelectReportFolder.FlatStyle = FlatStyle.Popup;
+            btnSelectReportFolder.BackColor = Color.LightGray;
+            btnSelectReportFolder.Cursor = Cursors.Hand;
+            btnSelectReportFolder.FlatStyle = FlatStyle.Flat;
             btnSelectReportFolder.Location = new Point(12, 158);
             btnSelectReportFolder.Name = "btnSelectReportFolder";
-            btnSelectReportFolder.Size = new Size(241, 23);
+            btnSelectReportFolder.Size = new Size(150, 30);
             btnSelectReportFolder.TabIndex = 5;
-            btnSelectReportFolder.Text = "Выбрать путь для сохранения отчетов";
-            btnSelectReportFolder.UseVisualStyleBackColor = true;
+            btnSelectReportFolder.Text = "Указать расположение";
+            btnSelectReportFolder.UseVisualStyleBackColor = false;
             btnSelectReportFolder.Click += btnSelectReportFolder_Click;
             // 
             // generateAndExportButton
             // 
-            generateAndExportButton.FlatStyle = FlatStyle.Popup;
-            generateAndExportButton.Location = new Point(12, 201);
+            generateAndExportButton.BackColor = Color.LightBlue;
+            generateAndExportButton.Cursor = Cursors.Hand;
+            generateAndExportButton.FlatStyle = FlatStyle.Flat;
+            generateAndExportButton.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point);
+            generateAndExportButton.Location = new Point(183, 158);
             generateAndExportButton.Name = "generateAndExportButton";
-            generateAndExportButton.Size = new Size(241, 23);
+            generateAndExportButton.Size = new Size(167, 30);
             generateAndExportButton.TabIndex = 6;
-            generateAndExportButton.Text = "Генерировать и экспортировать отчет";
-            generateAndExportButton.UseVisualStyleBackColor = true;
+            generateAndExportButton.Text = "Сформировать отчет";
+            generateAndExportButton.UseVisualStyleBackColor = false;
             generateAndExportButton.Click += generateAndExportButton_Click;
             // 
             // includeBonusesCheckBox
             // 
-            includeBonusesCheckBox.AutoSize = true;
-            includeBonusesCheckBox.Location = new Point(12, 93);
+            includeBonusesCheckBox.FlatStyle = FlatStyle.Flat;
+            includeBonusesCheckBox.Location = new Point(12, 88);
             includeBonusesCheckBox.Name = "includeBonusesCheckBox";
-            includeBonusesCheckBox.Size = new Size(167, 19);
+            includeBonusesCheckBox.Size = new Size(241, 25);
             includeBonusesCheckBox.TabIndex = 7;
-            includeBonusesCheckBox.Text = "Включать бонусы в отчет";
+            includeBonusesCheckBox.Text = "Включить дополнительные выплаты";
             includeBonusesCheckBox.UseVisualStyleBackColor = true;
+            // 
+            // lblDirectory
+            // 
+            lblDirectory.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point);
+            lblDirectory.Location = new Point(8, 116);
+            lblDirectory.Name = "lblDirectory";
+            lblDirectory.Size = new Size(90, 25);
+            lblDirectory.TabIndex = 8;
+            lblDirectory.Text = "Директория";
+            lblDirectory.TextAlign = ContentAlignment.MiddleRight;
             // 
             // ReportsForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(387, 244);
+            ClientSize = new Size(378, 214);
+            Controls.Add(lblDirectory);
             Controls.Add(includeBonusesCheckBox);
             Controls.Add(generateAndExportButton);
             Controls.Add(btnSelectReportFolder);
-            Controls.Add(dateTimePicker1);
+            Controls.Add(dtpReportDate);
             Controls.Add(reportTypeComboBox);
             Controls.Add(lblCurrentPath);
-            Controls.Add(label2);
-            Controls.Add(label1);
+            Controls.Add(lblSelectDate);
+            Controls.Add(lblReportType);
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
             Name = "ReportsForm";
             StartPosition = FormStartPosition.CenterParent;
-            Text = "Формирование отчетов";
+            Text = "Генерация отчетов";
             ResumeLayout(false);
-            PerformLayout();
         }
 
         #endregion
 
-        private Label label1;
-        private Label label2;
+        private Label lblReportType;
+        private Label lblSelectDate;
         private Label lblCurrentPath;
         private ComboBox reportTypeComboBox;
-        private DateTimePicker dateTimePicker1;
+        private DateTimePicker dtpReportDate;
         private Button btnSelectReportFolder;
         private Button generateAndExportButton;
         private CheckBox includeBonusesCheckBox;
+        private Label lblDirectory;
     }
 }

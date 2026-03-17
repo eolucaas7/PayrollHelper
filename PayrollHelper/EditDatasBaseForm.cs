@@ -17,8 +17,23 @@ namespace PayrollHelper
         public EditDatasBaseForm()
         {
             InitializeComponent();
+
+            // Привязка событий вручную, так как они могут отсутствовать в дизайнере
+            tableSelectorComboBox.SelectedIndexChanged += tableSelectorComboBox_SelectedIndexChanged;
+            saveButton.Click += saveButton_Click;
+            deleteButton.Click += deleteButton_Click;
+            refreshButton.Click += refreshButton_Click;
+            buttonShowEmployeeInfo.Click += buttonShowEmployeeInfo_Click;
+            dgvTables.DataError += DgvTables_DataError;
+
             LoadTablesIntoComboBox();
             LoadEmployees();
+        }
+
+        private void DgvTables_DataError(object? sender, DataGridViewDataErrorEventArgs e)
+        {
+            MessageBox.Show("Ошибка ввода данных. Проверьте правильность формата (числа, даты и т.д.).", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            e.ThrowException = false;
         }
 
         private void LoadDataIntoGridView()
@@ -33,40 +48,36 @@ namespace PayrollHelper
                 }
 
                 // Очистка привязки перед новой загрузкой
-                dataGridView1.DataSource = null;
-                dataGridView1.Columns.Clear();
+                dgvTables.DataSource = null;
 
                 switch (selectedTable)
                 {
                     case "employees":
                         Program.dbContext.Employees.Load();
-                        dataGridView1.DataSource = Program.dbContext.Employees.Local.ToBindingList();
+                        dgvTables.DataSource = Program.dbContext.Employees.Local.ToBindingList();
                         break;
                     case "positions":
                         Program.dbContext.Positions.Load();
-                        dataGridView1.DataSource = Program.dbContext.Positions.Local.ToBindingList();
+                        dgvTables.DataSource = Program.dbContext.Positions.Local.ToBindingList();
                         break;
                     case "payments":
                         Program.dbContext.Payments.Load();
-                        dataGridView1.DataSource = Program.dbContext.Payments.Local.ToBindingList();
+                        dgvTables.DataSource = Program.dbContext.Payments.Local.ToBindingList();
                         break;
                     case "salary_and_bonuses":
                         Program.dbContext.SalaryAndBonuses.Load();
-                        dataGridView1.DataSource = Program.dbContext.SalaryAndBonuses.Local.ToBindingList();
+                        dgvTables.DataSource = Program.dbContext.SalaryAndBonuses.Local.ToBindingList();
                         break;
                     case "taxation":
                         Program.dbContext.Taxations.Load();
-                        dataGridView1.DataSource = Program.dbContext.Taxations.Local.ToBindingList();
+                        dgvTables.DataSource = Program.dbContext.Taxations.Local.ToBindingList();
                         break;
                     default:
-                        MessageBox.Show("Выбрана недопустимая таблица.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         return;
                 }
 
-                // Скрываем навигационные свойства, чтобы они не отображались в GridView
+                UpdateStatusInfo(selectedTable);
                 HideNavigationProperties();
-                
-                // Настраиваем названия колонок для красоты (опционально)
                 SetReadableHeaders();
             }
             catch (Exception ex)
@@ -75,23 +86,32 @@ namespace PayrollHelper
             }
         }
 
+        private void UpdateStatusInfo(string tableName)
+        {
+            lblCurrentTable.Text = $"Таблица: {tableName}";
+            int count = dgvTables.Rows.Count;
+            if (dgvTables.AllowUserToAddRows && count > 0) count--;
+            lblRecordCount.Text = $"Записей: {count}";
+        }
+
         private void HideNavigationProperties()
         {
-            foreach (DataGridViewColumn col in dataGridView1.Columns)
+            foreach (DataGridViewColumn col in dgvTables.Columns)
             {
-                // Скрываем колонки, которые являются коллекциями или другими сущностями
-                if (col.Name.EndsWith("Navigation") || 
-                    col.Name == "Payments" || 
-                    col.Name == "Employees" || 
-                    col.Name == "Taxations" || 
-                    col.Name == "SalaryAndBonuses" || 
-                    col.Name == "Employee")
+                // Скрываем навигационные свойства EF Core
+                if (col.Name.EndsWith("Navigation") ||
+                    col.Name == "Payments" ||
+                    col.Name == "Employees" ||
+                    col.Name == "Taxations" ||
+                    col.Name == "SalaryAndBonuses" ||
+                    col.Name == "Employee" ||
+                    col.Name == "Position" ||
+                    col.Name == "SalaryAndBonusesTaxations")
                 {
                     col.Visible = false;
                 }
-                
-                // ID колонки делаем только для чтения
-                if (col.Name.ToLower().Contains("id"))
+
+                if (col.Name.ToLower().EndsWith("id"))
                 {
                     col.ReadOnly = true;
                 }
@@ -100,18 +120,39 @@ namespace PayrollHelper
 
         private void SetReadableHeaders()
         {
-            // Здесь можно переименовать заголовки колонок, если нужно
-            // Например: if (dataGridView1.Columns.Contains("EmployeeName")) dataGridView1.Columns["EmployeeName"].HeaderText = "ФИО";
+            Dictionary<string, string> headers = new Dictionary<string, string>
+            {
+                { "EmployeeId", "ID Сотрудника" },
+                { "EmployeeName", "ФИО" },
+                { "PostNumber", "№ Должности" },
+                { "Insurance", "Страховка" },
+                { "PhoneNumber", "Телефон" },
+                { "Address", "Адрес" },
+                { "PositionId", "ID Должности" },
+                { "PositionName", "Должность" },
+                { "BaseSalary", "Оклад" },
+                { "PaymentId", "ID Выплаты" },
+                { "PaymentDate", "Дата" },
+                { "Amount", "Сумма" },
+                { "Bonus", "Премия" },
+                { "TaxId", "ID Налога" },
+                { "TaxName", "Название налога" },
+                { "Rate", "Ставка %" }
+            };
+
+            foreach (DataGridViewColumn col in dgvTables.Columns)
+            {
+                if (headers.ContainsKey(col.Name))
+                {
+                    col.HeaderText = headers[col.Name];
+                }
+            }
         }
 
         private void LoadTablesIntoComboBox()
         {
             tableSelectorComboBox.Items.Clear();
-            tableSelectorComboBox.Items.Add("employees");
-            tableSelectorComboBox.Items.Add("payments");
-            tableSelectorComboBox.Items.Add("positions");
-            tableSelectorComboBox.Items.Add("salary_and_bonuses");
-            tableSelectorComboBox.Items.Add("taxation");
+            tableSelectorComboBox.Items.AddRange(new string[] { "employees", "positions", "payments", "salary_and_bonuses", "taxation" });
 
             if (tableSelectorComboBox.Items.Count > 0)
             {
@@ -123,17 +164,15 @@ namespace PayrollHelper
         {
             try
             {
+                var currentSelection = comboBoxEmployeeName.SelectedItem?.ToString();
                 comboBoxEmployeeName.Items.Clear();
-                var employees = Program.dbContext.Employees.Select(e => e.EmployeeName).ToList();
-                foreach (var name in employees)
-                {
-                    comboBoxEmployeeName.Items.Add(name);
-                }
+                var employees = Program.dbContext.Employees.OrderBy(e => e.EmployeeName).Select(e => e.EmployeeName).ToList();
+                comboBoxEmployeeName.Items.AddRange(employees.ToArray());
 
-                if (comboBoxEmployeeName.Items.Count > 0)
-                {
+                if (!string.IsNullOrEmpty(currentSelection) && comboBoxEmployeeName.Items.Contains(currentSelection))
+                    comboBoxEmployeeName.SelectedItem = currentSelection;
+                else if (comboBoxEmployeeName.Items.Count > 0)
                     comboBoxEmployeeName.SelectedIndex = 0;
-                }
             }
             catch (Exception ex)
             {
@@ -141,89 +180,63 @@ namespace PayrollHelper
             }
         }
 
-        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-            // В EF Core версии этот метод можно оставить пустым или удалить, 
-            // так как мы установили ReadOnly для ID колонок в HideNavigationProperties
-        }
-
-        private void tableSelectorComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        private void tableSelectorComboBox_SelectedIndexChanged(object? sender, EventArgs e)
         {
             LoadDataIntoGridView();
         }
 
-        private void saveButton_Click(object sender, EventArgs e)
+        private void saveButton_Click(object? sender, EventArgs e)
         {
             try
             {
+                dgvTables.EndEdit(); // Завершаем редактирование текущей ячейки
                 Program.dbContext.SaveChanges();
-                MessageBox.Show("Изменения успешно сохранены в базе данных!");
+                MessageBox.Show("Изменения успешно сохранены!", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 LoadDataIntoGridView();
-                LoadEmployees(); // На случай, если имена сотрудников изменились
+                LoadEmployees();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при сохранении данных: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                // В случае ошибки лучше перезагрузить данные, чтобы синхронизироваться с БД
+                MessageBox.Show($"Ошибка при сохранении: {ex.Message}\nВнутренняя ошибка: {ex.InnerException?.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 LoadDataIntoGridView();
             }
         }
 
-        private void deleteButton_Click(object sender, EventArgs e)
+        private void deleteButton_Click(object? sender, EventArgs e)
         {
             try
             {
-                if (dataGridView1.SelectedRows.Count > 0)
+                if (dgvTables.CurrentRow != null && !dgvTables.CurrentRow.IsNewRow)
                 {
-                    var item = dataGridView1.SelectedRows[0].DataBoundItem;
+                    var item = dgvTables.CurrentRow.DataBoundItem;
                     if (item == null) return;
 
-                    var confirmResult = MessageBox.Show("Вы уверены, что хотите удалить выбранную строку?", 
-                                                       "Подтверждение удаления", 
-                                                       MessageBoxButtons.YesNo, 
-                                                       MessageBoxIcon.Question);
-                    
+                    var confirmResult = MessageBox.Show("Вы уверены, что хотите удалить выбранную запись?",
+                                                       "Подтверждение", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
                     if (confirmResult == DialogResult.Yes)
                     {
                         string selectedTable = tableSelectorComboBox.Text.Trim();
 
                         if (selectedTable == "employees")
-                        {
-                            var employee = (Employee)item;
-                            // Ручное удаление связанных выплат, так как в БД настроено ClientSetNull
-                            var payments = Program.dbContext.Payments.Where(p => p.EmployeeId == employee.EmployeeId).ToList();
-                            Program.dbContext.Payments.RemoveRange(payments);
-                            Program.dbContext.Employees.Remove(employee);
-                        }
+                            Program.dbContext.Employees.Remove((Employee)item);
                         else if (selectedTable == "positions")
-                        {
                             Program.dbContext.Positions.Remove((Position)item);
-                        }
                         else if (selectedTable == "payments")
-                        {
                             Program.dbContext.Payments.Remove((Payment)item);
-                        }
                         else if (selectedTable == "salary_and_bonuses")
-                        {
                             Program.dbContext.SalaryAndBonuses.Remove((SalaryAndBonus)item);
-                        }
                         else if (selectedTable == "taxation")
-                        {
                             Program.dbContext.Taxations.Remove((Taxation)item);
-                        }
 
                         Program.dbContext.SaveChanges();
-                        MessageBox.Show("Строка успешно удалена!");
-                        
-                        if (selectedTable == "employees")
-                            LoadEmployees();
-                        
                         LoadDataIntoGridView();
+                        if (selectedTable == "employees") LoadEmployees();
                     }
                 }
                 else
                 {
-                    MessageBox.Show("Пожалуйста, выберите всю строку (выделите строку слева), чтобы удалить её.", "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("Выберите запись для удаления.", "Инфо", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
             catch (Exception ex)
@@ -233,30 +246,29 @@ namespace PayrollHelper
             }
         }
 
-        private void buttonShowEmployeeInfo_Click(object sender, EventArgs e)
+        private void buttonShowEmployeeInfo_Click(object? sender, EventArgs e)
         {
             try
             {
-                if (comboBoxEmployeeName.SelectedItem == null)
+                if (comboBoxEmployeeName.SelectedItem == null) return;
+
+                string name = comboBoxEmployeeName.SelectedItem.ToString();
+                // Загружаем сотрудника вместе с навигационным свойством должности
+                var emp = Program.dbContext.Employees
+                                    .Include(e => e.PostNumberNavigation)
+                                    .FirstOrDefault(e => e.EmployeeName == name);
+
+                if (emp != null)
                 {
-                    MessageBox.Show("Пожалуйста, выберите сотрудника.");
-                    return;
-                }
+                    // Получаем название должности (если навигационное свойство не пустое)
+                    string positionName = emp.PostNumberNavigation?.Name ?? "Не указана";
 
-                string employeeName = comboBoxEmployeeName.SelectedItem.ToString();
-                var employee = Program.dbContext.Employees.FirstOrDefault(e => e.EmployeeName == employeeName);
-
-                if (employee != null)
-                {
-                    string message = $"Информация о сотруднике:\n" +
-                                     $"ID: {employee.EmployeeId}\n" +
-                                     $"Имя: {employee.EmployeeName}\n" +
-                                     $"Телефон: {employee.PhoneNumber}\n" +
-                                     $"Адрес: {employee.Address}\n" +
-                                     $"Страхование: {(employee.Insurance == true ? "Есть" : "Нет")}\n" +
-                                     $"Номер должности: {employee.PostNumber}";
-
-                    MessageBox.Show(message, "Информация о сотруднике");
+                    MessageBox.Show($"ФИО: {emp.EmployeeName}\n" +
+                                    $"Должность: {positionName}\n" +
+                                    $"Телефон: {emp.PhoneNumber}\n" +
+                                    $"Адрес: {emp.Address}\n" +
+                                    $"Страховка: {(emp.Insurance == true ? "Есть" : "Нет")}", 
+                                    "Информация о сотруднике");
                 }
                 else
                 {
@@ -265,22 +277,14 @@ namespace PayrollHelper
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при получении информации о сотруднике: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Ошибка при получении данных: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void comboBoxEmployeeName_SelectedIndexChanged(object sender, EventArgs e)
+        private void refreshButton_Click(object? sender, EventArgs e)
         {
-            // Можно добавить логику, если нужно что-то делать при смене сотрудника
-        }
-
-        private void refreshButton_Click(object sender, EventArgs e)
-        {
-            // Для полного обновления сбрасываем локальные изменения и загружаем заново
-            // В простом случае просто вызываем LoadDataIntoGridView
             LoadDataIntoGridView();
             LoadEmployees();
-            MessageBox.Show("Данные обновлены.", "Инфо", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 }

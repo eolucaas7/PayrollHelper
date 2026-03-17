@@ -21,12 +21,17 @@ namespace PayrollHelper
         {
             InitializeComponent();
 
+            // Настройка lblCurrentPath для корректного отображения длинных путей
+            lblCurrentPath.AutoSize = false;
+            lblCurrentPath.Width = 350;
+            lblCurrentPath.TextAlign = ContentAlignment.MiddleLeft;
+
             reportTypeComboBox.Items.Clear();
             reportTypeComboBox.Items.Add("Отчет по зарплате");
             reportTypeComboBox.Items.Add("Отчет по премии");
-            reportTypeComboBox.SelectedIndex = 0; // Выбрать первый по умолчанию
+            reportTypeComboBox.SelectedIndex = 0;
 
-            // Инициализация пути к отчетам по умолчанию
+            // Загрузка и проверка пути
             string savedPath = Settings.Default.ReportFolderPath;
             
             if (string.IsNullOrEmpty(savedPath) || !Directory.Exists(savedPath))
@@ -36,10 +41,11 @@ namespace PayrollHelper
                     string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
                     string defaultReportsFolder = Path.Combine(desktopPath, "Reports");
                     
-                    // Создаем папку, если она еще не существует
-                    Directory.CreateDirectory(defaultReportsFolder);
+                    if (!Directory.Exists(defaultReportsFolder))
+                    {
+                        Directory.CreateDirectory(defaultReportsFolder);
+                    }
                     
-                    // Сохраняем путь в настройки
                     Settings.Default.ReportFolderPath = defaultReportsFolder;
                     Settings.Default.Save();
                     
@@ -47,13 +53,27 @@ namespace PayrollHelper
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Не удалось создать папку по умолчанию: {ex.Message}", "Предупреждение", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show($"Не удалось настроить путь по умолчанию: {ex.Message}", "Предупреждение", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
 
-            lblCurrentPath.Text = !string.IsNullOrEmpty(savedPath)
-                ? $"Текущий путь к отчетам: {savedPath}"
-                : "Папка для хранения отчетов не выбрана";
+            // Отображаем путь в лейбле
+            UpdatePathLabel(savedPath);
+        }
+
+        private void UpdatePathLabel(string path)
+        {
+            if (!string.IsNullOrEmpty(path))
+            {
+                lblCurrentPath.Text = path;
+                // Подсказка при наведении, если путь очень длинный
+                ToolTip toolTip = new ToolTip();
+                toolTip.SetToolTip(lblCurrentPath, path);
+            }
+            else
+            {
+                lblCurrentPath.Text = "Папка не выбрана";
+            }
         }
 
         private void generateAndExportButton_Click(object sender, EventArgs e)
@@ -90,7 +110,9 @@ namespace PayrollHelper
                     {
                         Settings.Default.ReportFolderPath = folderDialog.SelectedPath;
                         Settings.Default.Save();
-                        lblCurrentPath.Text = $"Текущий путь к отчетам: {folderDialog.SelectedPath}";
+                        
+                        // Сразу обновляем текст в лейбле на форме
+                        UpdatePathLabel(folderDialog.SelectedPath);
                     }
                 }
             }
@@ -110,7 +132,6 @@ namespace PayrollHelper
                     return;
                 }
 
-                // Гарантируем, что папка существует перед записью
                 if (!Directory.Exists(folderPath))
                 {
                     Directory.CreateDirectory(folderPath);
