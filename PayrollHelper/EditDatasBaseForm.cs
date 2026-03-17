@@ -18,6 +18,9 @@ namespace PayrollHelper
         {
             InitializeComponent();
 
+            this.KeyPreview = true;
+            this.KeyDown += LoginForm_KeyDown;
+
             // Привязка событий вручную, так как они могут отсутствовать в дизайнере
             tableSelectorComboBox.SelectedIndexChanged += tableSelectorComboBox_SelectedIndexChanged;
             saveButton.Click += saveButton_Click;
@@ -28,6 +31,14 @@ namespace PayrollHelper
 
             LoadTablesIntoComboBox();
             LoadEmployees();
+        }
+
+        private void LoginForm_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Escape)
+            {
+                this.Close();
+            }
         }
 
         private void DgvTables_DataError(object? sender, DataGridViewDataErrorEventArgs e)

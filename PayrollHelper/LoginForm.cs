@@ -20,12 +20,22 @@ namespace PayrollHelper
             InitializeComponent();
             InitializeUsersFile();
 
+            this.KeyPreview = true;
+            this.KeyDown += LoginForm_KeyDown;
             this.AcceptButton = this.loginButton;
 
             usernameTextBox.Enter += usernameTextBox_Enter;
             usernameTextBox.Leave += usernameTextBox_Leave;
             passwordTextBox.Enter += passwordTextBox_Enter;
             passwordTextBox.Leave += passwordTextBox_Leave;
+        }
+
+        private void LoginForm_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Escape)
+            {
+                this.Close();
+            }
         }
 
         private void InitializeUsersFile()

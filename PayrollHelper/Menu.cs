@@ -9,6 +9,9 @@ namespace PayrollHelper
         {
             InitializeComponent();
 
+            this.KeyPreview = true;
+            this.KeyDown += LoginForm_KeyDown;
+
             if (LoginForm.admin == true)
             {
                 buttonEditDatabase.Enabled = true;
@@ -18,6 +21,14 @@ namespace PayrollHelper
             {
                 buttonEditDatabase.Enabled = false;
                 buttonEditDatabase.Visible = false;
+            }
+        }
+
+        private void LoginForm_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Escape)
+            {
+                this.Close();
             }
         }
 

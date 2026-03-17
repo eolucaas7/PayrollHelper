@@ -56,9 +56,9 @@
             buttonEditDatabase.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point);
             buttonEditDatabase.Location = new Point(100, 120);
             buttonEditDatabase.Name = "buttonEditDatabase";
-            buttonEditDatabase.Size = new Size(219, 40);
+            buttonEditDatabase.Size = new Size(200, 40);
             buttonEditDatabase.TabIndex = 1;
-            buttonEditDatabase.Text = "Редактирование базы данных";
+            buttonEditDatabase.Text = "Редактирование БД";
             buttonEditDatabase.UseVisualStyleBackColor = false;
             buttonEditDatabase.Click += buttonEditDatabase_Click;
             // 
@@ -68,7 +68,7 @@
             buttonReport.Cursor = Cursors.Hand;
             buttonReport.FlatStyle = FlatStyle.Flat;
             buttonReport.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point);
-            buttonReport.Location = new Point(100, 170);
+            buttonReport.Location = new Point(100, 166);
             buttonReport.Name = "buttonReport";
             buttonReport.Size = new Size(200, 40);
             buttonReport.TabIndex = 2;

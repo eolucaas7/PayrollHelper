@@ -18,6 +18,9 @@ namespace PayrollHelper
         {
             InitializeComponent();
 
+            this.KeyPreview = true;
+            this.KeyDown += LoginForm_KeyDown;
+
             // Защита от ошибок Дизайнера Visual Studio
             if (System.ComponentModel.LicenseManager.UsageMode == System.ComponentModel.LicenseUsageMode.Designtime)
                 return;
@@ -48,6 +51,14 @@ namespace PayrollHelper
             catch (Exception ex)
             {
                 Console.WriteLine($"Ошибка при инициализации: {ex.Message}");
+            }
+        }
+
+        private void LoginForm_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Escape)
+            {
+                this.Close();
             }
         }
 
