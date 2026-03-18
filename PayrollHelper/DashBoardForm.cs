@@ -19,6 +19,8 @@ namespace PayrollHelper
         {
             InitializeComponent();
 
+            this.MouseClick += DashboardForm_MouseClick;
+
             tabPayments.Text = "Выплаты сотрудникам";
             tabNewEmployee.Text = "Добавление сотрудника";
             if (tabPositions != null) tabPositions.Text = "Должности";
@@ -29,6 +31,11 @@ namespace PayrollHelper
             // Защита от ошибок Дизайнера Visual Studio
             if (System.ComponentModel.LicenseManager.UsageMode == System.ComponentModel.LicenseUsageMode.Designtime)
                 return;
+
+            tabControl.MouseClick += DashboardForm_MouseClick;
+            tabPayments.MouseClick += DashboardForm_MouseClick;
+            tabNewEmployee.MouseClick += DashboardForm_MouseClick;
+            tabPositions.MouseClick += DashboardForm_MouseClick;
 
             // ИНИЦИАЛИЗАЦИЯ ВЫПЛАТ
             comboPaymentType.Items.Clear();
@@ -77,6 +84,16 @@ namespace PayrollHelper
             catch (Exception ex)
             {
                 Console.WriteLine($"Ошибка при инициализации: {ex.Message}");
+            }
+        }
+
+        private void DashboardForm_MouseClick(object sender, MouseEventArgs e)
+        {
+            // Проверяем, что клик был левой кнопкой мыши
+            if (e.Button == MouseButtons.Left)
+            {
+                // Снимаем фокус со всех элементов
+                this.ActiveControl = null;
             }
         }
 

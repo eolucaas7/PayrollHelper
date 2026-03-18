@@ -414,6 +414,7 @@
             ClientSize = new Size(548, 287);
             Controls.Add(tabControl);
             FormBorderStyle = FormBorderStyle.FixedSingle;
+            KeyPreview = true;
             MaximizeBox = false;
             Name = "DashBoardForm";
             StartPosition = FormStartPosition.CenterParent;
