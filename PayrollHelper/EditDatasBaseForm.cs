@@ -20,6 +20,7 @@ namespace PayrollHelper
 
             this.KeyPreview = true;
             this.KeyDown += LoginForm_KeyDown;
+            this.MouseClick += Form_MouseClick;
 
             // Привязка событий вручную
             tableSelectorComboBox.SelectedIndexChanged += tableSelectorComboBox_SelectedIndexChanged;
@@ -32,6 +33,14 @@ namespace PayrollHelper
 
             LoadTablesIntoComboBox();
             LoadEmployees();
+        }
+
+        private void Form_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                this.ActiveControl = null;
+            }
         }
 
         private void LoginForm_KeyDown(object sender, KeyEventArgs e)

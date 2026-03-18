@@ -23,6 +23,7 @@ namespace PayrollHelper
 
             this.KeyPreview = true;
             this.KeyDown += LoginForm_KeyDown;
+            this.MouseClick += Form_MouseClick;
 
             // Настройка lblCurrentPath для корректного отображения длинных путей
             lblCurrentPath.AutoSize = false;
@@ -62,6 +63,14 @@ namespace PayrollHelper
 
             // Отображаем путь в лейбле
             UpdatePathLabel(savedPath);
+        }
+
+        private void Form_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                this.ActiveControl = null;
+            }
         }
 
         private void LoginForm_KeyDown(object sender, KeyEventArgs e)

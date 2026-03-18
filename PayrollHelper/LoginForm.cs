@@ -23,11 +23,20 @@ namespace PayrollHelper
             this.KeyPreview = true;
             this.KeyDown += LoginForm_KeyDown;
             this.AcceptButton = this.loginButton;
+            this.MouseClick += Form_MouseClick;
 
             usernameTextBox.Enter += usernameTextBox_Enter;
             usernameTextBox.Leave += usernameTextBox_Leave;
             passwordTextBox.Enter += passwordTextBox_Enter;
             passwordTextBox.Leave += passwordTextBox_Leave;
+        }
+
+        private void Form_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                this.ActiveControl = null;
+            }
         }
 
         private void LoginForm_KeyDown(object sender, KeyEventArgs e)

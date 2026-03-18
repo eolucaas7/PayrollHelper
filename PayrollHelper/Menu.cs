@@ -11,6 +11,7 @@ namespace PayrollHelper
 
             this.KeyPreview = true;
             this.KeyDown += LoginForm_KeyDown;
+            this.MouseClick += Form_MouseClick;
 
             if (LoginForm.admin == true)
             {
@@ -21,6 +22,14 @@ namespace PayrollHelper
             {
                 buttonEditDatabase.Enabled = false;
                 buttonEditDatabase.Visible = false;
+            }
+        }
+
+        private void Form_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                this.ActiveControl = null;
             }
         }
 
