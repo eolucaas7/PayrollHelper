@@ -21,14 +21,16 @@ namespace PayrollHelper
 
             tabPayments.Text = "Выплаты сотрудникам";
             tabNewEmployee.Text = "Добавление сотрудника";
+            if (tabPositions != null) tabPositions.Text = "Должности";
 
             this.KeyPreview = true;
             this.KeyDown += LoginForm_KeyDown;
 
+            // Защита от ошибок Дизайнера Visual Studio
             if (System.ComponentModel.LicenseManager.UsageMode == System.ComponentModel.LicenseUsageMode.Designtime)
                 return;
 
-            // ИНИЦИАЛИЗАЦИЯ
+            // ИНИЦИАЛИЗАЦИЯ ВЫПЛАТ
             comboPaymentType.Items.Clear();
             comboPaymentType.Items.Add("Зарплата");
             comboPaymentType.Items.Add("Премия");
@@ -38,7 +40,7 @@ namespace PayrollHelper
             lblBonusType.Visible = false; 
             textSpecialAmount.Visible = false;
 
-            // ПРИВЯЗКА СОБЫТИЙ ВАЛИДАЦИИ И ОГРАНИЧЕНИЙ
+            // ПРИВЯЗКА СОБЫТИЙ ВАЛИДАЦИИ (ВЫПЛАТЫ И СОТРУДНИКИ)
             textSpecialAmount.KeyPress += textSpecialAmount_KeyPress;
             textSpecialAmount.TextChanged += textSpecialAmount_TextChanged;
             textSpecialAmount.Leave += (s, e) => { if (checkSpecialAmount.Checked) HighlightInvalidField(textSpecialAmount, IsValidSpecialAmount(textSpecialAmount.Text)); };
@@ -54,6 +56,19 @@ namespace PayrollHelper
 
             maskedPhoneNumber.Leave += (s, e) => HighlightInvalidField(maskedPhoneNumber, IsValidPhone(maskedPhoneNumber));
             maskedPhoneNumber.Enter += (s, e) => HighlightInvalidField(maskedPhoneNumber, true);
+
+            // ПРИВЯЗКА СОБЫТИЙ ВКЛАДКИ ДОЛЖНОСТЕЙ
+            if (btnAddPosition != null) btnAddPosition.Click += btnAddPosition_Click;
+            if (txtPositionName != null)
+            {
+                txtPositionName.Leave += (s, e) => HighlightInvalidField(txtPositionName, txtPositionName.Text.Trim().Length >= 3);
+                txtPositionName.Enter += (s, e) => HighlightInvalidField(txtPositionName, true);
+            }
+            if (txtPositionDescription != null)
+            {
+                txtPositionDescription.Leave += (s, e) => HighlightInvalidField(txtPositionDescription, txtPositionDescription.Text.Trim().Length >= 5);
+                txtPositionDescription.Enter += (s, e) => HighlightInvalidField(txtPositionDescription, true);
+            }
 
             try
             {
@@ -82,7 +97,7 @@ namespace PayrollHelper
         }
 
         // ==========================================================
-        // ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ВАЛИДАЦИИ И ОБРАБОТКИ ВВОДА
+        // ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ (ВАЛИДАЦИЯ И ПОДСВЕТКА)
         // ==========================================================
 
         private void HighlightInvalidField(Control control, bool isValid)
@@ -96,13 +111,14 @@ namespace PayrollHelper
             HighlightInvalidField(maskedPhoneNumber, true);
             HighlightInvalidField(textAddress, true);
             HighlightInvalidField(textSpecialAmount, true);
+            if (txtPositionName != null) HighlightInvalidField(txtPositionName, true);
+            if (txtPositionDescription != null) HighlightInvalidField(txtPositionDescription, true);
         }
 
         private bool IsValidFullName(string name)
         {
             if (string.IsNullOrWhiteSpace(name)) return false;
             name = name.Trim();
-            // Только буквы, пробелы и дефисы, от 5 до 100 символов
             return name.Length >= 5 && name.Length <= 100 && Regex.IsMatch(name, @"^[a-zA-Zа-яА-ЯёЁ\s-]+$");
         }
 
@@ -125,7 +141,6 @@ namespace PayrollHelper
             return double.TryParse(normalized, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out _);
         }
 
-        // Блокировка ввода цифр и спецсимволов в ФИО
         private void textFullName_KeyPress(object? sender, KeyPressEventArgs e)
         {
             if (char.IsControl(e.KeyChar)) return;
@@ -135,7 +150,6 @@ namespace PayrollHelper
             }
         }
 
-        // Очистка ФИО при вставке через Ctrl+V
         private void textFullName_TextChanged(object? sender, EventArgs e)
         {
             string input = textFullName.Text;
@@ -148,7 +162,6 @@ namespace PayrollHelper
             }
         }
 
-        // Ограничение ввода в поле суммы
         private void textSpecialAmount_KeyPress(object? sender, KeyPressEventArgs e)
         {
             if (char.IsControl(e.KeyChar)) return;
@@ -163,7 +176,6 @@ namespace PayrollHelper
             }
         }
 
-        // Очистка суммы при вставке (оставляем только цифры и один разделитель)
         private void textSpecialAmount_TextChanged(object? sender, EventArgs e)
         {
             string input = textSpecialAmount.Text;
@@ -184,6 +196,98 @@ namespace PayrollHelper
         }
 
         // ==========================================================
+        // Вкладка "ДОЛЖНОСТИ" (tabPositions)
+        // ==========================================================
+
+        private void LoadPositionsToList()
+        {
+            try
+            {
+                if (lstPositions == null) return;
+                var positions = Program.dbContext.Positions.OrderBy(p => p.Name).ToList();
+                lstPositions.Items.Clear();
+                foreach (var pos in positions)
+                {
+                    lstPositions.Items.Add($"{pos.Name} ({(pos.Status == "active" ? "Активна" : "Неактивна")})");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки списка должностей: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnAddPosition_Click(object? sender, EventArgs e)
+        {
+            try
+            {
+                ClearHighlights();
+                bool hasErrors = false;
+                StringBuilder errors = new StringBuilder("Пожалуйста, исправьте следующие ошибки:\n\n");
+
+                string posName = txtPositionName.Text.Trim();
+                string posDesc = txtPositionDescription.Text.Trim();
+
+                if (posName.Length < 3)
+                {
+                    HighlightInvalidField(txtPositionName, false);
+                    errors.AppendLine("- Название должности: минимум 3 символа.");
+                    hasErrors = true;
+                }
+
+                if (posDesc.Length < 5)
+                {
+                    HighlightInvalidField(txtPositionDescription, false);
+                    errors.AppendLine("- Описание: минимум 5 символов.");
+                    hasErrors = true;
+                }
+
+                if (hasErrors)
+                {
+                    MessageBox.Show(errors.ToString(), "Ошибка валидации", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // Проверка на уникальность названия должности
+                if (Program.dbContext.Positions.Any(p => p.Name.ToLower() == posName.ToLower()))
+                {
+                    HighlightInvalidField(txtPositionName, false);
+                    MessageBox.Show($"Должность '{posName}' уже существует в базе данных.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                var newPos = new Position
+                {
+                    Name = posName,
+                    Description = posDesc,
+                    Status = chkPositionActive.Checked ? "active" : "inactive",
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
+                };
+
+                Program.dbContext.Positions.Add(newPos);
+                Program.dbContext.SaveChanges();
+
+                MessageBox.Show($"Должность '{posName}' успешно добавлена!", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                
+                // Очистка полей
+                txtPositionName.Clear();
+                txtPositionDescription.Clear();
+                chkPositionActive.Checked = true;
+
+                // Обновляем списки
+                LoadPositionsToList();
+                LoadPostInComboBox(); 
+            }
+            catch (Exception ex)
+            {
+                string msg = ex.Message;
+                if (ex.InnerException != null) msg += "\n\nПодробности: " + ex.InnerException.Message;
+                MessageBox.Show($"Ошибка при добавлении должности: {msg}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // ==========================================================
         // Вкладка "НОВЫЙ СОТРУДНИК" (TabPage2)
         // ==========================================================
 
@@ -191,7 +295,12 @@ namespace PayrollHelper
         {
             try
             {
-                var positions = Program.dbContext.Positions.Select(p => p.Name).ToList();
+                // Показываем только активные должности для новых сотрудников
+                var positions = Program.dbContext.Positions
+                    .Where(p => p.Status == "active")
+                    .OrderBy(p => p.Name)
+                    .Select(p => p.Name).ToList();
+
                 comboPosition.Items.Clear();
                 foreach (var name in positions)
                 {
@@ -241,20 +350,15 @@ namespace PayrollHelper
                 }
 
                 // ПРАВИЛЬНОЕ ИЗВЛЕЧЕНИЕ НОМЕРА ТЕЛЕФОНА
-                // 1. Оставляем только цифры (из маски "+7 (999) 000-00-00" придут 11 цифр: 7 и 10 цифр номера)
                 string allDigits = Regex.Replace(maskedPhoneNumber.Text, @"\D", "");
-                
-                // 2. Получаем только 10 цифр абонента (убираем первую 7, если она есть и цифр больше 10)
                 string cleanDigits = allDigits;
                 if (allDigits.Length > 10 && allDigits.StartsWith("7"))
                 {
                     cleanDigits = allDigits.Substring(1);
                 }
-                
-                // 3. Формируем итоговую строку для БД
                 string formattedPhone = "+7" + cleanDigits;
 
-                // 4. Проверка на уникальность ПЕРЕД сохранением
+                // Проверка на уникальность номера телефона
                 bool exists = Program.dbContext.Employees.Any(e => e.PhoneNumber == formattedPhone);
                 if (exists)
                 {
@@ -285,7 +389,6 @@ namespace PayrollHelper
 
                 MessageBox.Show("Сотрудник успешно добавлен!", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 
-                // Очистка полей
                 textFullName.Clear();
                 maskedPhoneNumber.Clear();
                 textAddress.Clear();
@@ -295,7 +398,6 @@ namespace PayrollHelper
             }
             catch (Exception ex)
             {
-                // Резервная проверка на ошибку уникальности от БД
                 if (ex.InnerException?.Message.Contains("23505") == true || ex.Message.Contains("23505"))
                 {
                     HighlightInvalidField(maskedPhoneNumber, false);
@@ -501,14 +603,18 @@ namespace PayrollHelper
         private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
         {
             ClearHighlights();
-            if (tabControl.SelectedIndex == 0)
+            if (tabControl.SelectedIndex == 0) // Выплаты
             {
                 LoadEmployees();
                 LoadBonusTypes();
             }
-            else if (tabControl.SelectedIndex == 1)
+            else if (tabControl.SelectedIndex == 1) // Новый сотрудник
             {
                 LoadPostInComboBox();
+            }
+            else if (tabControl.SelectedIndex == 2) // Должности
+            {
+                LoadPositionsToList();
             }
         }
     }
