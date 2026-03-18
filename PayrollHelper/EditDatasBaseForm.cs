@@ -21,13 +21,14 @@ namespace PayrollHelper
             this.KeyPreview = true;
             this.KeyDown += LoginForm_KeyDown;
 
-            // Привязка событий вручную, так как они могут отсутствовать в дизайнере
+            // Привязка событий вручную
             tableSelectorComboBox.SelectedIndexChanged += tableSelectorComboBox_SelectedIndexChanged;
             saveButton.Click += saveButton_Click;
             deleteButton.Click += deleteButton_Click;
             refreshButton.Click += refreshButton_Click;
             buttonShowEmployeeInfo.Click += buttonShowEmployeeInfo_Click;
             dgvTables.DataError += DgvTables_DataError;
+            dgvTables.CellFormatting += DgvTables_CellFormatting;
 
             LoadTablesIntoComboBox();
             LoadEmployees();
@@ -47,6 +48,24 @@ namespace PayrollHelper
             e.ThrowException = false;
         }
 
+        // Форматирование отображения логических значений (Страховка: Есть/Нет)
+        private void DgvTables_CellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (tableSelectorComboBox.Text == "employees" && dgvTables.Columns[e.ColumnIndex].Name == "Insurance")
+            {
+                if (e.Value is bool val)
+                {
+                    e.Value = val ? "Есть" : "Нет";
+                    e.FormattingApplied = true;
+                }
+                else if (e.Value == null)
+                {
+                    e.Value = "Нет";
+                    e.FormattingApplied = true;
+                }
+            }
+        }
+
         private void LoadDataIntoGridView()
         {
             try
@@ -58,7 +77,6 @@ namespace PayrollHelper
                     return;
                 }
 
-                // Очистка привязки перед новой загрузкой
                 dgvTables.DataSource = null;
 
                 switch (selectedTable)
@@ -122,7 +140,8 @@ namespace PayrollHelper
                     col.Visible = false;
                 }
 
-                if (col.Name.ToLower().EndsWith("id"))
+                // ID колонки делаем только для чтения
+                if (col.Name.ToLower().EndsWith("id") || col.Name == "Id")
                 {
                     col.ReadOnly = true;
                 }
@@ -131,24 +150,30 @@ namespace PayrollHelper
 
         private void SetReadableHeaders()
         {
+            string selectedTable = tableSelectorComboBox.Text.Trim();
+
+            // Создаем словарь БЕЗ дубликатов ключей
             Dictionary<string, string> headers = new Dictionary<string, string>
             {
-                { "EmployeeId", "ID Сотрудника" },
+                { "EmployeeId", "ID сотрудника" },
                 { "EmployeeName", "ФИО" },
-                { "PostNumber", "№ Должности" },
+                { "PostNumber", "Номер должности" },
                 { "Insurance", "Страховка" },
                 { "PhoneNumber", "Телефон" },
                 { "Address", "Адрес" },
-                { "PositionId", "ID Должности" },
-                { "PositionName", "Должность" },
-                { "BaseSalary", "Оклад" },
-                { "PaymentId", "ID Выплаты" },
+                { "Name", "Название" },
+                { "Description", "Описание" },
+                { "Status", "Статус" },
+                { "CreatedAt", "Создано" },
+                { "UpdatedAt", "Обновлено" },
+                { "PaymentId", "ID выплаты" },
+                { "PaymentType", "Тип выплаты" },
+                { "PaymentAmount", "Сумма" },
                 { "PaymentDate", "Дата" },
                 { "Amount", "Сумма" },
-                { "Bonus", "Премия" },
-                { "TaxId", "ID Налога" },
-                { "TaxName", "Название налога" },
-                { "Rate", "Ставка %" }
+                { "DefaultAmount", "По умолчанию" },
+                { "TaxType", "Тип налога" },
+                { "TaxRate", "Ставка (%)" }
             };
 
             foreach (DataGridViewColumn col in dgvTables.Columns)
@@ -157,13 +182,26 @@ namespace PayrollHelper
                 {
                     col.HeaderText = headers[col.Name];
                 }
+                
+                // Обработка универсального поля "Id" в зависимости от контекста
+                if (col.Name == "Id")
+                {
+                    col.HeaderText = (selectedTable == "positions") ? "ID должности" : "ID";
+                }
             }
         }
 
         private void LoadTablesIntoComboBox()
         {
             tableSelectorComboBox.Items.Clear();
-            tableSelectorComboBox.Items.AddRange(new string[] { "employees", "positions", "payments", "salary_and_bonuses", "taxation" });
+            tableSelectorComboBox.Items.AddRange(new string[] 
+            { 
+                "employees", 
+                "positions", 
+                "payments", 
+                "salary_and_bonuses", 
+                "taxation"
+            });
 
             if (tableSelectorComboBox.Items.Count > 0)
             {
@@ -200,7 +238,7 @@ namespace PayrollHelper
         {
             try
             {
-                dgvTables.EndEdit(); // Завершаем редактирование текущей ячейки
+                dgvTables.EndEdit();
                 Program.dbContext.SaveChanges();
                 MessageBox.Show("Изменения успешно сохранены!", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 LoadDataIntoGridView();
@@ -213,7 +251,7 @@ namespace PayrollHelper
             }
         }
 
-        private void deleteButton_Click(object? sender, EventArgs e)
+        private async void deleteButton_Click(object? sender, EventArgs e)
         {
             try
             {
@@ -222,37 +260,165 @@ namespace PayrollHelper
                     var item = dgvTables.CurrentRow.DataBoundItem;
                     if (item == null) return;
 
-                    var confirmResult = MessageBox.Show("Вы уверены, что хотите удалить выбранную запись?",
-                                                       "Подтверждение", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                    string selectedTable = tableSelectorComboBox.Text.Trim();
 
-                    if (confirmResult == DialogResult.Yes)
+                    // --- УДАЛЕНИЕ СОТРУДНИКА ---
+                    if (selectedTable == "employees")
                     {
-                        string selectedTable = tableSelectorComboBox.Text.Trim();
+                        var employee = (Employee)item;
+                        var paymentCount = await Program.dbContext.Payments.CountAsync(p => p.EmployeeId == employee.EmployeeId);
 
-                        if (selectedTable == "employees")
-                            Program.dbContext.Employees.Remove((Employee)item);
-                        else if (selectedTable == "positions")
-                            Program.dbContext.Positions.Remove((Position)item);
-                        else if (selectedTable == "payments")
-                            Program.dbContext.Payments.Remove((Payment)item);
-                        else if (selectedTable == "salary_and_bonuses")
-                            Program.dbContext.SalaryAndBonuses.Remove((SalaryAndBonus)item);
-                        else if (selectedTable == "taxation")
-                            Program.dbContext.Taxations.Remove((Taxation)item);
+                        string confirmMsg = $"Вы действительно хотите удалить сотрудника {employee.EmployeeName}?";
+                        if (paymentCount > 0)
+                        {
+                            confirmMsg = $"У сотрудника {employee.EmployeeName} найдено {paymentCount} связанных выплат. " +
+                                         "\n\nВНИМАНИЕ: Все выплаты будут удалены вместе с сотрудником. Продолжить?";
+                        }
 
-                        Program.dbContext.SaveChanges();
-                        LoadDataIntoGridView();
-                        if (selectedTable == "employees") LoadEmployees();
+                        if (MessageBox.Show(confirmMsg, "Подтверждение удаления", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
+                            return;
+
+                        using var transaction = await Program.dbContext.Database.BeginTransactionAsync();
+                        try
+                        {
+                            var payments = await Program.dbContext.Payments.Where(p => p.EmployeeId == employee.EmployeeId).ToListAsync();
+                            if (payments.Any())
+                            {
+                                Program.dbContext.Payments.RemoveRange(payments);
+                                await Program.dbContext.SaveChangesAsync();
+                            }
+
+                            Program.dbContext.Employees.Remove(employee);
+                            await Program.dbContext.SaveChangesAsync();
+
+                            await transaction.CommitAsync();
+                            MessageBox.Show($"Сотрудник {employee.EmployeeName} успешно удален.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            LoadEmployees();
+                        }
+                        catch (Exception ex)
+                        {
+                            await transaction.RollbackAsync();
+                            throw ex;
+                        }
                     }
+
+                    // --- УДАЛЕНИЕ ДОЛЖНОСТИ ---
+                    else if (selectedTable == "positions")
+                    {
+                        var position = (Position)item;
+                        bool hasEmployees = await Program.dbContext.Employees.AnyAsync(e => e.PostNumber == position.Id);
+
+                        if (hasEmployees)
+                        {
+                            MessageBox.Show($"Невозможно удалить должность '{position.Name}', так как она закреплена за сотрудниками.", 
+                                            "Защита данных", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                            return;
+                        }
+
+                        if (MessageBox.Show($"Удалить должность '{position.Name}'?", "Подтверждение", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                        {
+                            Program.dbContext.Positions.Remove(position);
+                            await Program.dbContext.SaveChangesAsync();
+                            MessageBox.Show("Должность удалена.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                    }
+
+                    // --- УДАЛЕНИЕ ТИПА ВЫПЛАТЫ ---
+                    else if (selectedTable == "salary_and_bonuses")
+                    {
+                        var sb = (SalaryAndBonus)item;
+                        bool isUsedInPayments = await Program.dbContext.Payments.AnyAsync(p => p.PaymentType == sb.PaymentType);
+
+                        if (isUsedInPayments)
+                        {
+                            MessageBox.Show($"Невозможно удалить тип выплаты '{sb.PaymentType}', так как он уже использован в истории выплат.", 
+                                            "Защита данных", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                            return;
+                        }
+
+                        if (MessageBox.Show($"Удалить тип выплаты '{sb.PaymentType}'? Связи с налогами будут также удалены.", "Подтверждение", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+                            return;
+
+                        using var transaction = await Program.dbContext.Database.BeginTransactionAsync();
+                        try
+                        {
+                            await Program.dbContext.Entry(sb).Collection(s => s.Taxations).LoadAsync();
+                            sb.Taxations.Clear();
+                            await Program.dbContext.SaveChangesAsync();
+
+                            Program.dbContext.SalaryAndBonuses.Remove(sb);
+                            await Program.dbContext.SaveChangesAsync();
+
+                            await transaction.CommitAsync();
+                            MessageBox.Show("Тип выплаты успешно удален.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        catch (Exception ex)
+                        {
+                            await transaction.RollbackAsync();
+                            throw ex;
+                        }
+                    }
+
+                    // --- УДАЛЕНИЕ НАЛОГА ---
+                    else if (selectedTable == "taxation")
+                    {
+                        var tax = (Taxation)item;
+                        
+                        await Program.dbContext.Entry(tax).Collection(t => t.SalaryAndBonuses).LoadAsync();
+                        int usageCount = tax.SalaryAndBonuses.Count;
+
+                        string confirmMsg = usageCount > 0 
+                            ? $"Налог '{tax.TaxType}' привязан к типам выплат. При удалении эти связи будут разорваны. Продолжить?"
+                            : $"Удалить налог '{tax.TaxType}'?";
+
+                        if (MessageBox.Show(confirmMsg, "Подтверждение удаления", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
+                            return;
+
+                        using var transaction = await Program.dbContext.Database.BeginTransactionAsync();
+                        try
+                        {
+                            tax.SalaryAndBonuses.Clear();
+                            await Program.dbContext.SaveChangesAsync();
+
+                            Program.dbContext.Taxations.Remove(tax);
+                            await Program.dbContext.SaveChangesAsync();
+
+                            await transaction.CommitAsync();
+                            MessageBox.Show("Налог успешно удален.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        catch (Exception ex)
+                        {
+                            await transaction.RollbackAsync();
+                            throw ex;
+                        }
+                    }
+
+                    // --- УДАЛЕНИЕ ВЫПЛАТЫ ---
+                    else if (selectedTable == "payments")
+                    {
+                        var payment = (Payment)item;
+                        if (MessageBox.Show($"Удалить запись о выплате №{payment.PaymentId}?", "Подтверждение", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                        {
+                            Program.dbContext.Payments.Remove(payment);
+                            await Program.dbContext.SaveChangesAsync();
+                            MessageBox.Show("Выплата удалена.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                    }
+
+                    LoadDataIntoGridView();
                 }
                 else
                 {
-                    MessageBox.Show("Выберите запись для удаления.", "Инфо", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("Пожалуйста, выделите строку для удаления.", "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при удалении: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                string errorMsg = $"Произошла ошибка при удалении:\n{ex.Message}";
+                if (ex.InnerException != null)
+                    errorMsg += $"\nПодробности: {ex.InnerException.Message}";
+                
+                MessageBox.Show(errorMsg, "Критическая ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 LoadDataIntoGridView();
             }
         }
@@ -264,14 +430,12 @@ namespace PayrollHelper
                 if (comboBoxEmployeeName.SelectedItem == null) return;
 
                 string name = comboBoxEmployeeName.SelectedItem.ToString();
-                // Загружаем сотрудника вместе с навигационным свойством должности
                 var emp = Program.dbContext.Employees
                                     .Include(e => e.PostNumberNavigation)
                                     .FirstOrDefault(e => e.EmployeeName == name);
 
                 if (emp != null)
                 {
-                    // Получаем название должности (если навигационное свойство не пустое)
                     string positionName = emp.PostNumberNavigation?.Name ?? "Не указана";
 
                     MessageBox.Show($"ФИО: {emp.EmployeeName}\n" +
@@ -280,10 +444,6 @@ namespace PayrollHelper
                                     $"Адрес: {emp.Address}\n" +
                                     $"Страховка: {(emp.Insurance == true ? "Есть" : "Нет")}", 
                                     "Информация о сотруднике");
-                }
-                else
-                {
-                    MessageBox.Show("Сотрудник не найден.");
                 }
             }
             catch (Exception ex)

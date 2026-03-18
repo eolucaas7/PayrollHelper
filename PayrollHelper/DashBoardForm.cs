@@ -18,6 +18,9 @@ namespace PayrollHelper
         {
             InitializeComponent();
 
+            tabPayments.Text = "Выплаты сотрудникам";
+            tabNewEmployee.Text = "Добавление сотрудника";
+
             this.KeyPreview = true;
             this.KeyDown += LoginForm_KeyDown;
 
@@ -25,14 +28,7 @@ namespace PayrollHelper
             if (System.ComponentModel.LicenseManager.UsageMode == System.ComponentModel.LicenseUsageMode.Designtime)
                 return;
 
-            // 1. УСТАНОВКА ИМЕН ВКЛАДОК
-            if (tabControl.TabPages.Count >= 2)
-            {
-                tabControl.TabPages[0].Text = "Выплаты";
-                tabControl.TabPages[1].Text = "Новый сотрудник";
-            }
-
-            // 2. ИНИЦИАЛИЗАЦИЯ КОМБОБОКСА ТИПОВ ВЫПЛАТ
+            // ИНИЦИАЛИЗАЦИЯ КОМБОБОКСА ТИПОВ ВЫПЛАТ
             comboPaymentType.Items.Clear();
             comboPaymentType.Items.Add("Зарплата");
             comboPaymentType.Items.Add("Премия");
