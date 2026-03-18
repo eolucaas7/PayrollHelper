@@ -5,6 +5,7 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.EntityFrameworkCore;
@@ -24,24 +25,38 @@ namespace PayrollHelper
             this.KeyPreview = true;
             this.KeyDown += LoginForm_KeyDown;
 
-            // Защита от ошибок Дизайнера Visual Studio
             if (System.ComponentModel.LicenseManager.UsageMode == System.ComponentModel.LicenseUsageMode.Designtime)
                 return;
 
-            // ИНИЦИАЛИЗАЦИЯ КОМБОБОКСА ТИПОВ ВЫПЛАТ
+            // ИНИЦИАЛИЗАЦИЯ
             comboPaymentType.Items.Clear();
             comboPaymentType.Items.Add("Зарплата");
             comboPaymentType.Items.Add("Премия");
             comboPaymentType.SelectedIndex = 0;
 
-            // Настройка начальной видимости элементов на вкладке "Выплаты"
             comboBonusType.Visible = false;
-            lblBonusType.Visible = false; // label2 - это "Вид премии", а не label7!
+            lblBonusType.Visible = false; 
             textSpecialAmount.Visible = false;
+
+            // ПРИВЯЗКА СОБЫТИЙ ВАЛИДАЦИИ И ОГРАНИЧЕНИЙ
+            textSpecialAmount.KeyPress += textSpecialAmount_KeyPress;
+            textSpecialAmount.TextChanged += textSpecialAmount_TextChanged;
+            textSpecialAmount.Leave += (s, e) => { if (checkSpecialAmount.Checked) HighlightInvalidField(textSpecialAmount, IsValidSpecialAmount(textSpecialAmount.Text)); };
+            textSpecialAmount.Enter += (s, e) => HighlightInvalidField(textSpecialAmount, true);
+
+            textFullName.KeyPress += textFullName_KeyPress;
+            textFullName.TextChanged += textFullName_TextChanged;
+            textFullName.Leave += (s, e) => HighlightInvalidField(textFullName, IsValidFullName(textFullName.Text));
+            textFullName.Enter += (s, e) => HighlightInvalidField(textFullName, true);
+
+            textAddress.Leave += (s, e) => HighlightInvalidField(textAddress, IsValidAddress(textAddress.Text));
+            textAddress.Enter += (s, e) => HighlightInvalidField(textAddress, true);
+
+            maskedPhoneNumber.Leave += (s, e) => HighlightInvalidField(maskedPhoneNumber, IsValidPhone(maskedPhoneNumber));
+            maskedPhoneNumber.Enter += (s, e) => HighlightInvalidField(maskedPhoneNumber, true);
 
             try
             {
-                // Первичная загрузка данных
                 LoadInitialData();
             }
             catch (Exception ex)
@@ -67,6 +82,108 @@ namespace PayrollHelper
         }
 
         // ==========================================================
+        // ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ВАЛИДАЦИИ И ОБРАБОТКИ ВВОДА
+        // ==========================================================
+
+        private void HighlightInvalidField(Control control, bool isValid)
+        {
+            control.BackColor = isValid ? Color.White : Color.LightPink;
+        }
+
+        private void ClearHighlights()
+        {
+            HighlightInvalidField(textFullName, true);
+            HighlightInvalidField(maskedPhoneNumber, true);
+            HighlightInvalidField(textAddress, true);
+            HighlightInvalidField(textSpecialAmount, true);
+        }
+
+        private bool IsValidFullName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return false;
+            name = name.Trim();
+            // Только буквы, пробелы и дефисы, от 5 до 100 символов
+            return name.Length >= 5 && name.Length <= 100 && Regex.IsMatch(name, @"^[a-zA-Zа-яА-ЯёЁ\s-]+$");
+        }
+
+        private bool IsValidPhone(MaskedTextBox mtb)
+        {
+            return mtb.MaskFull;
+        }
+
+        private bool IsValidAddress(string address)
+        {
+            if (string.IsNullOrWhiteSpace(address)) return false;
+            address = address.Trim();
+            return address.Length >= 10 && address.Length <= 150;
+        }
+
+        private bool IsValidSpecialAmount(string amount)
+        {
+            if (string.IsNullOrWhiteSpace(amount)) return false;
+            string normalized = amount.Replace(',', '.');
+            return double.TryParse(normalized, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out _);
+        }
+
+        // Блокировка ввода цифр и спецсимволов в ФИО
+        private void textFullName_KeyPress(object? sender, KeyPressEventArgs e)
+        {
+            if (char.IsControl(e.KeyChar)) return;
+            if (!char.IsLetter(e.KeyChar) && e.KeyChar != ' ' && e.KeyChar != '-')
+            {
+                e.Handled = true;
+            }
+        }
+
+        // Очистка ФИО при вставке через Ctrl+V
+        private void textFullName_TextChanged(object? sender, EventArgs e)
+        {
+            string input = textFullName.Text;
+            string filtered = Regex.Replace(input, @"[^a-zA-Zа-яА-ЯёЁ\s-]", "");
+            if (input != filtered)
+            {
+                int cursor = textFullName.SelectionStart;
+                textFullName.Text = filtered;
+                textFullName.SelectionStart = Math.Min(cursor, filtered.Length);
+            }
+        }
+
+        // Ограничение ввода в поле суммы
+        private void textSpecialAmount_KeyPress(object? sender, KeyPressEventArgs e)
+        {
+            if (char.IsControl(e.KeyChar)) return;
+            if (!char.IsDigit(e.KeyChar) && e.KeyChar != '.' && e.KeyChar != ',')
+            {
+                e.Handled = true;
+                return;
+            }
+            if ((e.KeyChar == '.' || e.KeyChar == ',') && (textSpecialAmount.Text.Contains(".") || textSpecialAmount.Text.Contains(",")))
+            {
+                e.Handled = true;
+            }
+        }
+
+        // Очистка суммы при вставке (оставляем только цифры и один разделитель)
+        private void textSpecialAmount_TextChanged(object? sender, EventArgs e)
+        {
+            string input = textSpecialAmount.Text;
+            string filtered = Regex.Replace(input, @"[^0-9.,]", "");
+            int firstSep = filtered.IndexOfAny(new char[] { '.', ',' });
+            if (firstSep != -1)
+            {
+                string head = filtered.Substring(0, firstSep + 1);
+                string tail = filtered.Substring(firstSep + 1).Replace(".", "").Replace(",", "");
+                filtered = head + tail;
+            }
+            if (input != filtered)
+            {
+                int cursor = textSpecialAmount.SelectionStart;
+                textSpecialAmount.Text = filtered;
+                textSpecialAmount.SelectionStart = Math.Min(cursor, filtered.Length);
+            }
+        }
+
+        // ==========================================================
         // Вкладка "НОВЫЙ СОТРУДНИК" (TabPage2)
         // ==========================================================
 
@@ -74,19 +191,13 @@ namespace PayrollHelper
         {
             try
             {
-                var positions = Program.dbContext.Positions
-                    .Select(p => p.Name)
-                    .ToList();
-
+                var positions = Program.dbContext.Positions.Select(p => p.Name).ToList();
                 comboPosition.Items.Clear();
                 foreach (var name in positions)
                 {
-                    if (!string.IsNullOrEmpty(name))
-                        comboPosition.Items.Add(name);
+                    if (!string.IsNullOrEmpty(name)) comboPosition.Items.Add(name);
                 }
-
-                if (comboPosition.Items.Count > 0)
-                    comboPosition.SelectedIndex = 0;
+                if (comboPosition.Items.Count > 0) comboPosition.SelectedIndex = 0;
             }
             catch (Exception ex)
             {
@@ -98,10 +209,57 @@ namespace PayrollHelper
         {
             try
             {
-                // Валидация
-                if (string.IsNullOrWhiteSpace(textFullName.Text))
+                ClearHighlights();
+                bool hasErrors = false;
+                StringBuilder errorMsg = new StringBuilder("Пожалуйста, исправьте ошибки в следующих полях:\n\n");
+
+                if (!IsValidFullName(textFullName.Text))
                 {
-                    MessageBox.Show("Введите ФИО сотрудника.", "Предупреждение", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    HighlightInvalidField(textFullName, false);
+                    errorMsg.AppendLine("- ФИО: от 5 до 100 символов, только буквы.");
+                    hasErrors = true;
+                }
+
+                if (!IsValidPhone(maskedPhoneNumber))
+                {
+                    HighlightInvalidField(maskedPhoneNumber, false);
+                    errorMsg.AppendLine("- Телефон: номер должен быть заполнен полностью.");
+                    hasErrors = true;
+                }
+
+                if (!IsValidAddress(textAddress.Text))
+                {
+                    HighlightInvalidField(textAddress, false);
+                    errorMsg.AppendLine("- Адрес: от 10 до 150 символов.");
+                    hasErrors = true;
+                }
+
+                if (hasErrors)
+                {
+                    MessageBox.Show(errorMsg.ToString(), "Ошибка валидации", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // ПРАВИЛЬНОЕ ИЗВЛЕЧЕНИЕ НОМЕРА ТЕЛЕФОНА
+                // 1. Оставляем только цифры (из маски "+7 (999) 000-00-00" придут 11 цифр: 7 и 10 цифр номера)
+                string allDigits = Regex.Replace(maskedPhoneNumber.Text, @"\D", "");
+                
+                // 2. Получаем только 10 цифр абонента (убираем первую 7, если она есть и цифр больше 10)
+                string cleanDigits = allDigits;
+                if (allDigits.Length > 10 && allDigits.StartsWith("7"))
+                {
+                    cleanDigits = allDigits.Substring(1);
+                }
+                
+                // 3. Формируем итоговую строку для БД
+                string formattedPhone = "+7" + cleanDigits;
+
+                // 4. Проверка на уникальность ПЕРЕД сохранением
+                bool exists = Program.dbContext.Employees.Any(e => e.PhoneNumber == formattedPhone);
+                if (exists)
+                {
+                    HighlightInvalidField(maskedPhoneNumber, false);
+                    MessageBox.Show($"Сотрудник с номером {formattedPhone} уже существует в базе данных.", "Ошибка уникальности", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
@@ -113,14 +271,13 @@ namespace PayrollHelper
                     return;
                 }
 
-                // Создание через EF Core
                 var newEmployee = new Employee
                 {
-                    EmployeeName = textFullName.Text,
+                    EmployeeName = textFullName.Text.Trim(),
                     PostNumber = position.Id,
                     Insurance = checkInsurance.Checked,
-                    PhoneNumber = textPhoneNumber.Text,
-                    Address = textAddress.Text
+                    PhoneNumber = formattedPhone,
+                    Address = textAddress.Text.Trim()
                 };
 
                 Program.dbContext.Employees.Add(newEmployee);
@@ -130,16 +287,26 @@ namespace PayrollHelper
                 
                 // Очистка полей
                 textFullName.Clear();
-                textPhoneNumber.Clear();
+                maskedPhoneNumber.Clear();
                 textAddress.Clear();
                 checkInsurance.Checked = false;
 
-                // Обновляем список сотрудников на вкладке выплат
                 LoadEmployees();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при добавлении сотрудника: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // Резервная проверка на ошибку уникальности от БД
+                if (ex.InnerException?.Message.Contains("23505") == true || ex.Message.Contains("23505"))
+                {
+                    HighlightInvalidField(maskedPhoneNumber, false);
+                    MessageBox.Show("Сотрудник с таким номером телефона уже существует.", "Ошибка уникальности", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+                else
+                {
+                    string msg = ex.Message;
+                    if (ex.InnerException != null) msg += "\n\nПодробности: " + ex.InnerException.Message;
+                    MessageBox.Show($"Ошибка при добавлении сотрудника: {msg}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
@@ -151,19 +318,13 @@ namespace PayrollHelper
         {
             try
             {
-                var employees = Program.dbContext.Employees
-                    .Select(e => e.EmployeeName)
-                    .ToList();
-
+                var employees = Program.dbContext.Employees.Select(e => e.EmployeeName).ToList();
                 comboEmployee.Items.Clear();
                 foreach (var name in employees)
                 {
-                    if (!string.IsNullOrEmpty(name))
-                        comboEmployee.Items.Add(name);
+                    if (!string.IsNullOrEmpty(name)) comboEmployee.Items.Add(name);
                 }
-
-                if (comboEmployee.Items.Count > 0)
-                    comboEmployee.SelectedIndex = 0;
+                if (comboEmployee.Items.Count > 0) comboEmployee.SelectedIndex = 0;
             }
             catch (Exception ex)
             {
@@ -177,18 +338,14 @@ namespace PayrollHelper
             {
                 var bonuses = Program.dbContext.SalaryAndBonuses
                     .Where(s => EF.Functions.ILike(s.PaymentType, "Премия%"))
-                    .Select(s => s.PaymentType)
-                    .ToList();
+                    .Select(s => s.PaymentType).ToList();
 
                 comboBonusType.Items.Clear();
                 foreach (var type in bonuses)
                 {
-                    if (!string.IsNullOrEmpty(type))
-                        comboBonusType.Items.Add(type);
+                    if (!string.IsNullOrEmpty(type)) comboBonusType.Items.Add(type);
                 }
-
-                if (comboBonusType.Items.Count > 0)
-                    comboBonusType.SelectedIndex = 0;
+                if (comboBonusType.Items.Count > 0) comboBonusType.SelectedIndex = 0;
             }
             catch (Exception ex)
             {
@@ -215,12 +372,14 @@ namespace PayrollHelper
 
                 if (checkSpecialAmount.Checked)
                 {
-                    // СЦЕНАРИЙ: ОСОБАЯ СУММА
-                    if (!double.TryParse(textSpecialAmount.Text, out double specialAmount))
+                    if (!IsValidSpecialAmount(textSpecialAmount.Text))
                     {
-                        MessageBox.Show("Введите корректную числовую сумму.");
+                        HighlightInvalidField(textSpecialAmount, false);
+                        MessageBox.Show("Введите корректную числовую сумму (например: 1500,50).", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
                     }
+
+                    double.TryParse(textSpecialAmount.Text.Replace(',', '.'), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double specialAmount);
 
                     var ndflTax = Program.dbContext.Taxations.FirstOrDefault(t => EF.Functions.ILike(t.TaxType, "НДФЛ"));
                     double taxRate = (double)(ndflTax?.TaxRate ?? 0);
@@ -240,7 +399,6 @@ namespace PayrollHelper
                 {
                     if (comboPaymentType.Text == "Зарплата")
                     {
-                        // СЦЕНАРИЙ: ЗАРПЛАТА
                         string postName = employee.PostNumberNavigation?.Name;
                         var salaryInfo = Program.dbContext.SalaryAndBonuses
                             .FirstOrDefault(s => EF.Functions.ILike(s.PaymentType, $"%{postName}%"))
@@ -252,7 +410,6 @@ namespace PayrollHelper
                             return;
                         }
 
-                        // Налоги
                         var ndflTax = Program.dbContext.Taxations.FirstOrDefault(t => EF.Functions.ILike(t.TaxType, "НДФЛ"));
                         double totalTaxRate = (double)(ndflTax?.TaxRate ?? 0);
 
@@ -277,7 +434,6 @@ namespace PayrollHelper
                     }
                     else if (comboPaymentType.Text == "Премия")
                     {
-                        // СЦЕНАРИЙ: ПРЕМИЯ
                         var bonusInfo = Program.dbContext.SalaryAndBonuses.FirstOrDefault(s => s.PaymentType == comboBonusType.Text);
                         if (bonusInfo == null)
                         {
@@ -299,7 +455,9 @@ namespace PayrollHelper
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при выполнении выплаты: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                string msg = ex.Message;
+                if (ex.InnerException != null) msg += "\n\nПодробности: " + ex.InnerException.Message;
+                MessageBox.Show($"Ошибка при выполнении выплаты: {msg}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
@@ -317,8 +475,6 @@ namespace PayrollHelper
             bool isSpecial = checkSpecialAmount.Checked;
             textSpecialAmount.Visible = isSpecial;
             textSpecialAmount.Enabled = isSpecial;
-            
-            // Скрываем/показываем обычный выбор типа оплаты
             comboPaymentType.Visible = !isSpecial;
             comboPaymentType.Enabled = !isSpecial;
             lblPaymentType.Visible = !isSpecial;
@@ -326,33 +482,31 @@ namespace PayrollHelper
             if (isSpecial)
             {
                 comboBonusType.Visible = false;
-                lblBonusType.Visible = false; // Используем label2 (Вид премии)
+                lblBonusType.Visible = false;
             }
             else
             {
-                // Восстанавливаем видимость премии, если она была выбрана до этого
                 comboPaymentType_SelectedIndexChanged(null, null);
             }
         }
 
         private void comboPaymentType_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // Показываем выбор вида премии только если выбрана "Премия"
             bool isBonus = comboPaymentType.Text == "Премия";
             comboBonusType.Visible = isBonus;
             comboBonusType.Enabled = isBonus;
-            lblBonusType.Visible = isBonus; // Используем label2 (Вид премии)
+            lblBonusType.Visible = isBonus;
         }
 
         private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // Обновляем данные в зависимости от активной вкладки
-            if (tabControl.SelectedIndex == 0) // Выплаты
+            ClearHighlights();
+            if (tabControl.SelectedIndex == 0)
             {
                 LoadEmployees();
                 LoadBonusTypes();
             }
-            else if (tabControl.SelectedIndex == 1) // Новый сотрудник
+            else if (tabControl.SelectedIndex == 1)
             {
                 LoadPostInComboBox();
             }

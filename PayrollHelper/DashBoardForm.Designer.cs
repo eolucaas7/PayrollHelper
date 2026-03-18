@@ -40,10 +40,10 @@
             comboBonusType = new ComboBox();
             comboPaymentType = new ComboBox();
             tabNewEmployee = new TabPage();
+            maskedPhoneNumber = new MaskedTextBox();
             buttonAddEmployee = new Button();
             comboPosition = new ComboBox();
             checkInsurance = new CheckBox();
-            textPhoneNumber = new TextBox();
             textAddress = new TextBox();
             textFullName = new TextBox();
             lblAddress = new Label();
@@ -179,10 +179,10 @@
             // 
             // tabNewEmployee
             // 
+            tabNewEmployee.Controls.Add(maskedPhoneNumber);
             tabNewEmployee.Controls.Add(buttonAddEmployee);
             tabNewEmployee.Controls.Add(comboPosition);
             tabNewEmployee.Controls.Add(checkInsurance);
-            tabNewEmployee.Controls.Add(textPhoneNumber);
             tabNewEmployee.Controls.Add(textAddress);
             tabNewEmployee.Controls.Add(textFullName);
             tabNewEmployee.Controls.Add(lblAddress);
@@ -196,6 +196,20 @@
             tabNewEmployee.TabIndex = 1;
             tabNewEmployee.Text = "Добавление сотрудника";
             tabNewEmployee.UseVisualStyleBackColor = true;
+            // 
+            // maskedPhoneNumber
+            // 
+            maskedPhoneNumber.BackColor = Color.White;
+            maskedPhoneNumber.BeepOnError = true;
+            maskedPhoneNumber.BorderStyle = BorderStyle.FixedSingle;
+            maskedPhoneNumber.ForeColor = Color.Black;
+            maskedPhoneNumber.InsertKeyMode = InsertKeyMode.Overwrite;
+            maskedPhoneNumber.Location = new Point(133, 90);
+            maskedPhoneNumber.Mask = "+7 (999) 000-00-00";
+            maskedPhoneNumber.Name = "maskedPhoneNumber";
+            maskedPhoneNumber.Size = new Size(250, 23);
+            maskedPhoneNumber.SkipLiterals = false;
+            maskedPhoneNumber.TabIndex = 10;
             // 
             // buttonAddEmployee
             // 
@@ -229,13 +243,6 @@
             checkInsurance.TabIndex = 7;
             checkInsurance.Text = "Страховка";
             checkInsurance.UseVisualStyleBackColor = true;
-            // 
-            // textPhoneNumber
-            // 
-            textPhoneNumber.Location = new Point(120, 88);
-            textPhoneNumber.Name = "textPhoneNumber";
-            textPhoneNumber.Size = new Size(250, 23);
-            textPhoneNumber.TabIndex = 6;
             // 
             // textAddress
             // 
@@ -324,7 +331,6 @@
         private ComboBox comboBonusType;
         private ComboBox comboPaymentType;
         private TabPage tabNewEmployee;
-        private TextBox textPhoneNumber;
         private TextBox textAddress;
         private TextBox textFullName;
         private Label lblAddress;
@@ -334,5 +340,6 @@
         private Button buttonAddEmployee;
         private ComboBox comboPosition;
         private CheckBox checkInsurance;
+        private MaskedTextBox maskedPhoneNumber;
     }
 }
