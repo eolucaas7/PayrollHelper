@@ -32,11 +32,13 @@
             buttonEditDatabase = new Button();
             buttonReport = new Button();
             label1 = new Label();
+            buttonManageTaxes = new Button();
+            buttonManagePayments = new Button();
             SuspendLayout();
             // 
             // buttonDashBoard
             // 
-            buttonDashBoard.BackColor = Color.LightBlue;
+            buttonDashBoard.BackColor = Color.SkyBlue;
             buttonDashBoard.Cursor = Cursors.Hand;
             buttonDashBoard.FlatStyle = FlatStyle.Flat;
             buttonDashBoard.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point);
@@ -50,11 +52,11 @@
             // 
             // buttonEditDatabase
             // 
-            buttonEditDatabase.BackColor = Color.LightGreen;
+            buttonEditDatabase.BackColor = Color.LightSteelBlue;
             buttonEditDatabase.Cursor = Cursors.Hand;
             buttonEditDatabase.FlatStyle = FlatStyle.Flat;
             buttonEditDatabase.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point);
-            buttonEditDatabase.Location = new Point(100, 120);
+            buttonEditDatabase.Location = new Point(100, 248);
             buttonEditDatabase.Name = "buttonEditDatabase";
             buttonEditDatabase.Size = new Size(200, 40);
             buttonEditDatabase.TabIndex = 1;
@@ -64,11 +66,11 @@
             // 
             // buttonReport
             // 
-            buttonReport.BackColor = Color.LightYellow;
+            buttonReport.BackColor = Color.WhiteSmoke;
             buttonReport.Cursor = Cursors.Hand;
             buttonReport.FlatStyle = FlatStyle.Flat;
             buttonReport.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point);
-            buttonReport.Location = new Point(100, 166);
+            buttonReport.Location = new Point(100, 307);
             buttonReport.Name = "buttonReport";
             buttonReport.Size = new Size(200, 40);
             buttonReport.TabIndex = 2;
@@ -88,12 +90,42 @@
             label1.Text = "PayrollHelper";
             label1.TextAlign = ContentAlignment.MiddleCenter;
             // 
+            // buttonManageTaxes
+            // 
+            buttonManageTaxes.BackColor = Color.Orange;
+            buttonManageTaxes.Cursor = Cursors.Hand;
+            buttonManageTaxes.FlatStyle = FlatStyle.Flat;
+            buttonManageTaxes.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point);
+            buttonManageTaxes.Location = new Point(100, 130);
+            buttonManageTaxes.Name = "buttonManageTaxes";
+            buttonManageTaxes.Size = new Size(200, 40);
+            buttonManageTaxes.TabIndex = 4;
+            buttonManageTaxes.Text = "Управление налогами";
+            buttonManageTaxes.UseVisualStyleBackColor = false;
+            buttonManageTaxes.Click += buttonManageTaxes_Click;
+            // 
+            // buttonManagePayments
+            // 
+            buttonManagePayments.BackColor = Color.LightGreen;
+            buttonManagePayments.Cursor = Cursors.Hand;
+            buttonManagePayments.FlatStyle = FlatStyle.Flat;
+            buttonManagePayments.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point);
+            buttonManagePayments.Location = new Point(100, 188);
+            buttonManagePayments.Name = "buttonManagePayments";
+            buttonManagePayments.Size = new Size(200, 40);
+            buttonManagePayments.TabIndex = 5;
+            buttonManagePayments.Text = "Управление выплатами";
+            buttonManagePayments.UseVisualStyleBackColor = false;
+            buttonManagePayments.Click += buttonManagePayments_Click;
+            // 
             // Menu
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.ControlLight;
-            ClientSize = new Size(384, 261);
+            ClientSize = new Size(384, 381);
+            Controls.Add(buttonManagePayments);
+            Controls.Add(buttonManageTaxes);
             Controls.Add(label1);
             Controls.Add(buttonReport);
             Controls.Add(buttonEditDatabase);
@@ -113,5 +145,7 @@
         private Button buttonEditDatabase;
         private Button buttonReport;
         private Label label1;
+        private Button buttonManageTaxes;
+        private Button buttonManagePayments;
     }
 }

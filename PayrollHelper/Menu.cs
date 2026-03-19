@@ -49,6 +49,22 @@ namespace PayrollHelper
             dashboardForm.ShowDialog();
         }
 
+        private void buttonManageTaxes_Click(object sender, EventArgs e)
+        {
+            this.Hide();
+            ManageTaxationForm taxationForm = new ManageTaxationForm();
+            taxationForm.FormClosed += (s, args) => this.Show();
+            taxationForm.ShowDialog();
+        }
+
+        private void buttonManagePayments_Click(object sender, EventArgs e)
+        {
+            this.Hide();
+            ManagePaymentsForm paymentForm = new ManagePaymentsForm();
+            paymentForm.FormClosed += (s, args) => this.Show();
+            paymentForm.ShowDialog();
+        }
+
         private void buttonEditDatabase_Click(object sender, EventArgs e)
         {
             this.Hide();
@@ -59,7 +75,7 @@ namespace PayrollHelper
 
         private void buttonReport_Click(object sender, EventArgs e)
         {
-            this.Hide();    
+            this.Hide();
             ReportsForm reportsForm = new ReportsForm();
             reportsForm.FormClosed += (s, args) => this.Show();
             reportsForm.ShowDialog();
