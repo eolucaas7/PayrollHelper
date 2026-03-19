@@ -161,7 +161,8 @@ namespace PayrollHelper
                 lstTaxes.Items.Clear();
                 foreach (var tax in taxes)
                 {
-                    lstTaxes.Items.Add($"{tax.TaxType} — {tax.TaxRate}%");
+                    string rateStr = tax.TaxRate.ToString("0.##").Replace('.', ',');
+                    lstTaxes.Items.Add($"{tax.TaxType} — {rateStr}%");
                 }
             }
             catch (Exception ex)
