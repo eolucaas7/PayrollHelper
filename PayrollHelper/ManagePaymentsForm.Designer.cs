@@ -38,8 +38,11 @@
             lstPayments = new ListBox();
             grpAddPayment = new GroupBox();
             grpPaymentList = new GroupBox();
+            grpTaxSelection = new GroupBox();
+            clbTaxes = new CheckedListBox();
             grpAddPayment.SuspendLayout();
             grpPaymentList.SuspendLayout();
+            grpTaxSelection.SuspendLayout();
             SuspendLayout();
             // 
             // lblPaymentName
@@ -118,7 +121,7 @@
             lstPayments.Location = new Point(6, 28);
             lstPayments.Name = "lstPayments";
             lstPayments.ScrollAlwaysVisible = true;
-            lstPayments.Size = new Size(230, 280);
+            lstPayments.Size = new Size(230, 286);
             lstPayments.TabIndex = 12;
             // 
             // grpAddPayment
@@ -151,11 +154,36 @@
             grpPaymentList.TabStop = false;
             grpPaymentList.Text = "Существующие выплаты";
             // 
+            // grpTaxSelection
+            // 
+            grpTaxSelection.Controls.Add(clbTaxes);
+            grpTaxSelection.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            grpTaxSelection.Location = new Point(751, 12);
+            grpTaxSelection.Name = "grpTaxSelection";
+            grpTaxSelection.Size = new Size(248, 320);
+            grpTaxSelection.TabIndex = 15;
+            grpTaxSelection.TabStop = false;
+            grpTaxSelection.Text = "Применяемые налоги";
+            // 
+            // clbTaxes
+            // 
+            clbTaxes.BackColor = Color.White;
+            clbTaxes.BorderStyle = BorderStyle.FixedSingle;
+            clbTaxes.CheckOnClick = true;
+            clbTaxes.FormattingEnabled = true;
+            clbTaxes.IntegralHeight = false;
+            clbTaxes.Location = new Point(6, 22);
+            clbTaxes.Name = "clbTaxes";
+            clbTaxes.ScrollAlwaysVisible = true;
+            clbTaxes.Size = new Size(230, 292);
+            clbTaxes.TabIndex = 0;
+            // 
             // ManagePaymentsForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(733, 341);
+            ClientSize = new Size(1011, 358);
+            Controls.Add(grpTaxSelection);
             Controls.Add(grpPaymentList);
             Controls.Add(grpAddPayment);
             FormBorderStyle = FormBorderStyle.FixedSingle;
@@ -167,6 +195,7 @@
             grpAddPayment.ResumeLayout(false);
             grpAddPayment.PerformLayout();
             grpPaymentList.ResumeLayout(false);
+            grpTaxSelection.ResumeLayout(false);
             ResumeLayout(false);
         }
 
@@ -182,5 +211,7 @@
         private ListBox lstPayments;
         private GroupBox grpAddPayment;
         private GroupBox grpPaymentList;
+        private GroupBox grpTaxSelection;
+        private CheckedListBox clbTaxes;
     }
 }

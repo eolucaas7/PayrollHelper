@@ -16,6 +16,8 @@ namespace PayrollHelper
 {
     public partial class ManagePaymentsForm : Form
     {
+        private List<Taxation> _allTaxes = new List<Taxation>();
+
         public ManagePaymentsForm()
         {
             InitializeComponent();
@@ -30,6 +32,7 @@ namespace PayrollHelper
             foreach (Control c in this.Controls) c.MouseClick += Form_MouseClick;
             grpAddPayment.MouseClick += Form_MouseClick;
             grpPaymentList.MouseClick += Form_MouseClick;
+            grpTaxSelection.MouseClick += Form_MouseClick;
 
             // Привязка событий валидации НАЗВАНИЯ
             txtPaymentName.KeyPress += txtPaymentName_KeyPress;
@@ -46,8 +49,13 @@ namespace PayrollHelper
             txtPaymentDescription.Enter += (s, e) => HighlightInvalidField(txtPaymentDescription, true);
 
             btnAddPayment.Click += btnAddPayment_Click;
+            lstPayments.SelectedIndexChanged += lstPayments_SelectedIndexChanged;
+
+            // Настройка списка налогов
+            clbTaxes.CheckOnClick = true;
 
             // Начальная загрузка
+            LoadTaxes();
             LoadPayments();
         }
 
@@ -74,7 +82,6 @@ namespace PayrollHelper
         {
             if (string.IsNullOrWhiteSpace(name)) return false;
             name = name.Trim();
-            // Минимум 3 символа, только буквы, пробелы и дефисы
             return name.Length >= 3 && name.Length <= 50 && Regex.IsMatch(name, @"^[a-zA-Zа-яА-ЯёЁ\s-]+$");
         }
 
@@ -89,18 +96,15 @@ namespace PayrollHelper
             return false;
         }
 
-        // Обработка ввода НАЗВАНИЯ (блокировка цифр и спецсимволов)
         private void txtPaymentName_KeyPress(object? sender, KeyPressEventArgs e)
         {
             if (char.IsControl(e.KeyChar)) return;
-            // Разрешить только буквы, пробел и дефис
             if (!char.IsLetter(e.KeyChar) && e.KeyChar != ' ' && e.KeyChar != '-')
             {
                 e.Handled = true;
             }
         }
 
-        // Фильтрация НАЗВАНИЯ при вставке (Ctrl+V)
         private void txtPaymentName_TextChanged(object? sender, EventArgs e)
         {
             string input = txtPaymentName.Text;
@@ -113,7 +117,6 @@ namespace PayrollHelper
             }
         }
 
-        // Обработка ввода СУММЫ (только числа и один разделитель)
         private void txtDefaultAmount_KeyPress(object? sender, KeyPressEventArgs e)
         {
             if (char.IsControl(e.KeyChar)) return;
@@ -128,7 +131,6 @@ namespace PayrollHelper
             }
         }
 
-        // Фильтрация СУММЫ при вставке
         private void txtDefaultAmount_TextChanged(object? sender, EventArgs e)
         {
             string input = txtDefaultAmount.Text;
@@ -152,6 +154,24 @@ namespace PayrollHelper
         // ЛОГИКА РАБОТЫ С ДАННЫМИ
         // ==========================================================
 
+        private void LoadTaxes()
+        {
+            try
+            {
+                if (Program.dbContext == null) return;
+                _allTaxes = Program.dbContext.Taxations.OrderBy(t => t.TaxType).ToList();
+                clbTaxes.Items.Clear();
+                foreach (var tax in _allTaxes)
+                {
+                    clbTaxes.Items.Add($"{tax.TaxType} — {tax.TaxRate}%");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки налогов: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         private void LoadPayments()
         {
             try
@@ -161,8 +181,9 @@ namespace PayrollHelper
                 lstPayments.Items.Clear();
                 foreach (var p in payments)
                 {
-                    string amountStr = p.DefaultAmount?.ToString("0.##").Replace('.', ',') ?? "0";
-                    lstPayments.Items.Add($"{p.PaymentType} — {amountStr}"); // Этой строки не хватало!
+                    // Формат: "Название — сумма" (с запятой, без лишних нулей)
+                    string amountStr = p.DefaultAmount?.ToString("G29", new CultureInfo("ru-RU")) ?? "0";
+                    lstPayments.Items.Add($"{p.PaymentType} — {amountStr}");
                 }
             }
             catch (Exception ex)
@@ -171,8 +192,49 @@ namespace PayrollHelper
             }
         }
 
+        private void lstPayments_SelectedIndexChanged(object? sender, EventArgs e)
+        {
+            if (lstPayments.SelectedItem == null) return;
+
+            try
+            {
+                string selectedText = lstPayments.SelectedItem.ToString() ?? "";
+                string paymentName = selectedText.Split(" — ")[0];
+
+                var payment = Program.dbContext.SalaryAndBonuses
+                    .Include(p => p.Taxations)
+                    .FirstOrDefault(p => p.PaymentType == paymentName);
+
+                if (payment != null)
+                {
+                    txtPaymentName.Text = payment.PaymentType;
+                    txtDefaultAmount.Text = payment.DefaultAmount?.ToString(new CultureInfo("ru-RU")) ?? "";
+                    txtPaymentDescription.Text = payment.Description ?? "";
+
+                    // Снимаем все галочки
+                    for (int i = 0; i < clbTaxes.Items.Count; i++)
+                        clbTaxes.SetItemChecked(i, false);
+
+                    // Отмечаем привязанные налоги
+                    foreach (var tax in payment.Taxations)
+                    {
+                        int index = _allTaxes.FindIndex(t => t.Id == tax.Id);
+                        if (index != -1)
+                        {
+                            clbTaxes.SetItemChecked(index, true);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при выборе выплаты: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         private void btnAddPayment_Click(object? sender, EventArgs e)
         {
+            using var transaction = Program.dbContext.Database.BeginTransaction();
             try
             {
                 string name = txtPaymentName.Text.Trim();
@@ -192,6 +254,7 @@ namespace PayrollHelper
                     return;
                 }
 
+                // Проверка уникальности
                 if (Program.dbContext.SalaryAndBonuses.Any(p => p.PaymentType.ToLower() == name.ToLower()))
                 {
                     HighlightInvalidField(txtPaymentName, false);
@@ -204,25 +267,41 @@ namespace PayrollHelper
                 var newPayment = new SalaryAndBonus
                 {
                     PaymentType = name,
-                    Amount = amount, // В модели это поле обязательное
-                    DefaultAmount = amount, // Сумма по умолчанию
+                    Amount = amount,
+                    DefaultAmount = amount,
                     Description = string.IsNullOrEmpty(desc) ? null : desc
                 };
 
+                // Добавление связей с налогами
+                for (int i = 0; i < clbTaxes.Items.Count; i++)
+                {
+                    if (clbTaxes.GetItemChecked(i))
+                    {
+                        var tax = _allTaxes[i];
+                        newPayment.Taxations.Add(tax);
+                    }
+                }
+
                 Program.dbContext.SalaryAndBonuses.Add(newPayment);
                 Program.dbContext.SaveChanges();
+                transaction.Commit();
 
                 MessageBox.Show($"Выплата '{name}' успешно добавлена!", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
+                // Очистка полей
                 txtPaymentName.Clear();
                 txtDefaultAmount.Clear();
                 txtPaymentDescription.Clear();
+                for (int i = 0; i < clbTaxes.Items.Count; i++)
+                    clbTaxes.SetItemChecked(i, false);
+                
                 this.ActiveControl = null;
 
                 LoadPayments();
             }
             catch (Exception ex)
             {
+                transaction.Rollback();
                 string msg = ex.Message;
                 if (ex.InnerException != null) msg += "\n\nПодробности: " + ex.InnerException.Message;
                 MessageBox.Show($"Ошибка при сохранении выплаты: {msg}", "Критическая ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);

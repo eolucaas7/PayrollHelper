@@ -120,7 +120,7 @@
             lstTaxes.Location = new Point(6, 22);
             lstTaxes.Name = "lstTaxes";
             lstTaxes.ScrollAlwaysVisible = true;
-            lstTaxes.Size = new Size(230, 280);
+            lstTaxes.Size = new Size(230, 292);
             lstTaxes.TabIndex = 8;
             // 
             // grpAddTax
