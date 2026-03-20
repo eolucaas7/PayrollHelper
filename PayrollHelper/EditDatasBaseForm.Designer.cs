@@ -18,15 +18,14 @@ namespace PayrollHelper
         private void InitializeComponent()
         {
             grpTable = new GroupBox();
-            lblSelectTable = new Label();
-            tableSelectorComboBox = new ComboBox();
-            refreshButton = new Button();
-            deleteButton = new Button();
             saveButton = new Button();
+            tableSelectorComboBox = new ComboBox();
+            deleteButton = new Button();
+            lblSelectTable = new Label();
             grpEmployee = new GroupBox();
-            lblSelectEmployee = new Label();
-            comboBoxEmployeeName = new ComboBox();
             buttonShowEmployeeInfo = new Button();
+            comboBoxEmployeeName = new ComboBox();
+            lblSelectEmployee = new Label();
             dgvTables = new DataGridView();
             statusStrip1 = new StatusStrip();
             lblRecordCount = new ToolStripStatusLabel();
@@ -45,26 +44,28 @@ namespace PayrollHelper
             grpTable.Controls.Add(tableSelectorComboBox);
             grpTable.Controls.Add(deleteButton);
             grpTable.Controls.Add(lblSelectTable);
-            grpTable.Controls.Add(refreshButton);
             grpTable.FlatStyle = FlatStyle.Flat;
             grpTable.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold, GraphicsUnit.Point);
             grpTable.ForeColor = SystemColors.WindowText;
             grpTable.Location = new Point(12, 12);
             grpTable.Name = "grpTable";
-            grpTable.Size = new Size(700, 100);
+            grpTable.Size = new Size(760, 100);
             grpTable.TabIndex = 0;
             grpTable.TabStop = false;
             grpTable.Text = "Работа с таблицей";
             // 
-            // lblSelectTable
+            // saveButton
             // 
-            lblSelectTable.ForeColor = SystemColors.WindowText;
-            lblSelectTable.Location = new Point(10, 25);
-            lblSelectTable.Name = "lblSelectTable";
-            lblSelectTable.Size = new Size(120, 23);
-            lblSelectTable.TabIndex = 0;
-            lblSelectTable.Text = "Выберите таблицу:";
-            lblSelectTable.TextAlign = ContentAlignment.MiddleRight;
+            saveButton.BackColor = Color.LightGreen;
+            saveButton.Cursor = Cursors.Hand;
+            saveButton.FlatStyle = FlatStyle.Flat;
+            saveButton.ForeColor = Color.Black;
+            saveButton.Location = new Point(10, 64);
+            saveButton.Name = "saveButton";
+            saveButton.Size = new Size(166, 30);
+            saveButton.TabIndex = 4;
+            saveButton.Text = "💾 Сохранить изменения";
+            saveButton.UseVisualStyleBackColor = false;
             // 
             // tableSelectorComboBox
             // 
@@ -78,44 +79,28 @@ namespace PayrollHelper
             tableSelectorComboBox.Size = new Size(205, 23);
             tableSelectorComboBox.TabIndex = 1;
             // 
-            // refreshButton
-            // 
-            refreshButton.BackColor = Color.LightBlue;
-            refreshButton.Cursor = Cursors.Hand;
-            refreshButton.FlatStyle = FlatStyle.Flat;
-            refreshButton.ForeColor = Color.Black;
-            refreshButton.Location = new Point(10, 64);
-            refreshButton.Name = "refreshButton";
-            refreshButton.Size = new Size(100, 30);
-            refreshButton.TabIndex = 1;
-            refreshButton.Text = "⟳ Обновить";
-            refreshButton.UseVisualStyleBackColor = false;
-            // 
             // deleteButton
             // 
             deleteButton.BackColor = Color.LightCoral;
             deleteButton.Cursor = Cursors.Hand;
             deleteButton.FlatStyle = FlatStyle.Flat;
             deleteButton.ForeColor = Color.Black;
-            deleteButton.Location = new Point(325, 64);
+            deleteButton.Location = new Point(192, 64);
             deleteButton.Name = "deleteButton";
             deleteButton.Size = new Size(120, 30);
             deleteButton.TabIndex = 3;
             deleteButton.Text = "🗑 Удалить строку";
             deleteButton.UseVisualStyleBackColor = false;
             // 
-            // saveButton
+            // lblSelectTable
             // 
-            saveButton.BackColor = Color.LightGreen;
-            saveButton.Cursor = Cursors.Hand;
-            saveButton.FlatStyle = FlatStyle.Flat;
-            saveButton.ForeColor = Color.Black;
-            saveButton.Location = new Point(141, 64);
-            saveButton.Name = "saveButton";
-            saveButton.Size = new Size(166, 30);
-            saveButton.TabIndex = 4;
-            saveButton.Text = "💾 Сохранить изменения";
-            saveButton.UseVisualStyleBackColor = false;
+            lblSelectTable.ForeColor = SystemColors.WindowText;
+            lblSelectTable.Location = new Point(10, 25);
+            lblSelectTable.Name = "lblSelectTable";
+            lblSelectTable.Size = new Size(120, 23);
+            lblSelectTable.TabIndex = 0;
+            lblSelectTable.Text = "Выберите таблицу:";
+            lblSelectTable.TextAlign = ContentAlignment.MiddleRight;
             // 
             // grpEmployee
             // 
@@ -132,15 +117,18 @@ namespace PayrollHelper
             grpEmployee.TabStop = false;
             grpEmployee.Text = "Информация о сотруднике";
             // 
-            // lblSelectEmployee
+            // buttonShowEmployeeInfo
             // 
-            lblSelectEmployee.ForeColor = SystemColors.WindowText;
-            lblSelectEmployee.Location = new Point(10, 25);
-            lblSelectEmployee.Name = "lblSelectEmployee";
-            lblSelectEmployee.Size = new Size(80, 23);
-            lblSelectEmployee.TabIndex = 0;
-            lblSelectEmployee.Text = "Сотрудник:";
-            lblSelectEmployee.TextAlign = ContentAlignment.MiddleRight;
+            buttonShowEmployeeInfo.BackColor = Color.LightYellow;
+            buttonShowEmployeeInfo.Cursor = Cursors.Hand;
+            buttonShowEmployeeInfo.FlatStyle = FlatStyle.Flat;
+            buttonShowEmployeeInfo.ForeColor = Color.Black;
+            buttonShowEmployeeInfo.Location = new Point(410, 20);
+            buttonShowEmployeeInfo.Name = "buttonShowEmployeeInfo";
+            buttonShowEmployeeInfo.Size = new Size(200, 30);
+            buttonShowEmployeeInfo.TabIndex = 2;
+            buttonShowEmployeeInfo.Text = "👤 Показать информацию";
+            buttonShowEmployeeInfo.UseVisualStyleBackColor = false;
             // 
             // comboBoxEmployeeName
             // 
@@ -154,18 +142,15 @@ namespace PayrollHelper
             comboBoxEmployeeName.Size = new Size(300, 23);
             comboBoxEmployeeName.TabIndex = 1;
             // 
-            // buttonShowEmployeeInfo
+            // lblSelectEmployee
             // 
-            buttonShowEmployeeInfo.BackColor = Color.LightYellow;
-            buttonShowEmployeeInfo.Cursor = Cursors.Hand;
-            buttonShowEmployeeInfo.FlatStyle = FlatStyle.Flat;
-            buttonShowEmployeeInfo.ForeColor = Color.Black;
-            buttonShowEmployeeInfo.Location = new Point(410, 20);
-            buttonShowEmployeeInfo.Name = "buttonShowEmployeeInfo";
-            buttonShowEmployeeInfo.Size = new Size(200, 30);
-            buttonShowEmployeeInfo.TabIndex = 2;
-            buttonShowEmployeeInfo.Text = "👤 Показать информацию";
-            buttonShowEmployeeInfo.UseVisualStyleBackColor = false;
+            lblSelectEmployee.ForeColor = SystemColors.WindowText;
+            lblSelectEmployee.Location = new Point(10, 25);
+            lblSelectEmployee.Name = "lblSelectEmployee";
+            lblSelectEmployee.Size = new Size(80, 23);
+            lblSelectEmployee.TabIndex = 0;
+            lblSelectEmployee.Text = "Сотрудник:";
+            lblSelectEmployee.TextAlign = ContentAlignment.MiddleRight;
             // 
             // dgvTables
             // 
@@ -193,7 +178,8 @@ namespace PayrollHelper
             statusStrip1.Size = new Size(784, 25);
             statusStrip1.SizingGrip = false;
             statusStrip1.TabIndex = 3;
-            statusStrip1.Text = "statusStrip1";            
+            statusStrip1.Text = "statusStrip1";
+            // 
             // lblRecordCount
             // 
             lblRecordCount.Name = "lblRecordCount";
@@ -242,7 +228,6 @@ namespace PayrollHelper
         private GroupBox grpTable;
         private ComboBox tableSelectorComboBox;
         private Label lblSelectTable;
-        private Button refreshButton;
         private Button saveButton;
         private Button deleteButton;
         private GroupBox grpEmployee;

@@ -26,7 +26,6 @@ namespace PayrollHelper
             tableSelectorComboBox.SelectedIndexChanged += tableSelectorComboBox_SelectedIndexChanged;
             saveButton.Click += saveButton_Click;
             deleteButton.Click += deleteButton_Click;
-            refreshButton.Click += refreshButton_Click;
             buttonShowEmployeeInfo.Click += buttonShowEmployeeInfo_Click;
             dgvTables.DataError += DgvTables_DataError;
             dgvTables.CellFormatting += DgvTables_CellFormatting;
@@ -459,12 +458,6 @@ namespace PayrollHelper
             {
                 MessageBox.Show($"Ошибка при получении данных: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-        }
-
-        private void refreshButton_Click(object? sender, EventArgs e)
-        {
-            LoadDataIntoGridView();
-            LoadEmployees();
         }
     }
 }
