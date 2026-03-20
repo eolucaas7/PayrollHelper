@@ -10,7 +10,7 @@ namespace PayrollHelper
             InitializeComponent();
 
             this.KeyPreview = true;
-            this.KeyDown += LoginForm_KeyDown;
+            this.KeyDown += Menu_KeyDown;
             this.MouseClick += Form_MouseClick;
 
             if (LoginForm.admin == true)
@@ -33,11 +33,13 @@ namespace PayrollHelper
             }
         }
 
-        private void LoginForm_KeyDown(object sender, KeyEventArgs e)
+        private void Menu_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Escape)
             {
-                this.Close();
+                this.Hide();
+                LoginForm loginForm = new LoginForm();
+                loginForm.Show();
             }
         }
 

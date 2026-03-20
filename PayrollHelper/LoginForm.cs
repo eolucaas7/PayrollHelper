@@ -23,12 +23,41 @@ namespace PayrollHelper
             this.KeyPreview = true;
             this.KeyDown += LoginForm_KeyDown;
             this.AcceptButton = this.loginButton;
+            
+            // Снятие фокуса только при клике на саму форму
             this.MouseClick += Form_MouseClick;
 
-            usernameTextBox.Enter += usernameTextBox_Enter;
-            usernameTextBox.Leave += usernameTextBox_Leave;
-            passwordTextBox.Enter += passwordTextBox_Enter;
-            passwordTextBox.Leave += passwordTextBox_Leave;
+            llCreateUser.LinkClicked += llCreateUser_LinkClicked;
+        }
+
+        private void HighlightInvalidField(Control control, bool isValid)
+        {
+            control.BackColor = isValid ? Color.White : Color.LightPink;
+        }
+
+        private bool ValidateLoginField()
+        {
+            bool isValid = !string.IsNullOrWhiteSpace(usernameTextBox.Text) && usernameTextBox.Text != "Введите имя пользователя";
+            HighlightInvalidField(usernameTextBox, isValid);
+            return isValid;
+        }
+
+        private bool ValidatePasswordField()
+        {
+            bool isValid = !string.IsNullOrWhiteSpace(passwordTextBox.Text) && passwordTextBox.Text != "Введите пароль";
+            HighlightInvalidField(passwordTextBox, isValid);
+            return isValid;
+        }
+
+        private void llCreateUser_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            using (var form = new CreateUserForm())
+            {
+                if (form.ShowDialog() == DialogResult.OK)
+                {
+                    // Обновление не требуется, так как данные в JSON
+                }
+            }
         }
 
         private void Form_MouseClick(object sender, MouseEventArgs e)
@@ -36,6 +65,12 @@ namespace PayrollHelper
             if (e.Button == MouseButtons.Left)
             {
                 this.ActiveControl = null;
+                // Принудительно снимаем фокус с поля пароля
+                if (passwordTextBox.Focused)
+                {
+                    passwordTextBox.Enabled = false;
+                    passwordTextBox.Enabled = true;
+                }
             }
         }
 
@@ -57,12 +92,10 @@ namespace PayrollHelper
                     {
                         new UserEntry { Username = "admin", PasswordHash = GetHash("admin"), Role = "Administrator" },
                         new UserEntry { Username = "CEO", PasswordHash = GetHash("CEO123"), Role = "Administrator" },
-                        new UserEntry { Username = "user", PasswordHash = GetHash("user"), Role = "User" },
-                        new UserEntry { Username = "Васильев Артем Сергеевич", PasswordHash = GetHash("vasartem123"), Role = "User" }
+                        new UserEntry { Username = "user", PasswordHash = GetHash("user"), Role = "User" }
                     }
                 };
 
-                // Настройки для красивого вывода и поддержки кириллицы (без экранирования)
                 var options = new JsonSerializerOptions
                 {
                     Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
@@ -74,7 +107,7 @@ namespace PayrollHelper
             }
         }
 
-        private string GetHash(string input)
+        public static string GetHash(string input)
         {
             using (SHA256 sha256Hash = SHA256.Create())
             {
@@ -92,20 +125,22 @@ namespace PayrollHelper
         {
             try
             {
+                if (!ValidateLoginField())
+                {
+                    MessageBox.Show("Введите логин", "Предупреждение", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                if (!ValidatePasswordField())
+                {
+                    MessageBox.Show("Введите пароль", "Предупреждение", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
                 string username = usernameTextBox.Text;
                 string password = passwordTextBox.Text;
 
-                if (username == "Введите имя пользователя" || string.IsNullOrWhiteSpace(password) || password == "Введите пароль")
-                {
-                    MessageBox.Show("Введите логин и пароль!", "Предупреждение", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-
-                if (!File.Exists(UsersFilePath))
-                {
-                    MessageBox.Show("Файл пользователей не найден!", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
+                if (!File.Exists(UsersFilePath)) return;
 
                 string json = File.ReadAllText(UsersFilePath);
                 var userRoot = JsonSerializer.Deserialize<UserRoot>(json);
@@ -117,11 +152,11 @@ namespace PayrollHelper
                 {
                     admin = user.Role == "Administrator";
                     string roleText = admin ? "с правами администратора" : "как обычный сотрудник";
-                    
+
                     MessageBox.Show($"Вы вошли {roleText}.", "Добро пожаловать", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                     Menu menu = new Menu();
-                    menu.FormClosed += (s, args) => this.Close();
+                    menu.FormClosed += (s, args) => { if (!menu.Visible && Application.OpenForms.Count == 0) Application.Exit(); else if (Application.OpenForms.Count == 1 && Application.OpenForms[0] is LoginForm) return; else Application.Exit(); };
                     menu.Show();
                     this.Hide();
                 }
@@ -132,12 +167,13 @@ namespace PayrollHelper
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Произошла ошибка при входе: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private void usernameTextBox_Enter(object sender, EventArgs e)
         {
+            HighlightInvalidField(usernameTextBox, true);
             if (usernameTextBox.Text == "Введите имя пользователя")
             {
                 usernameTextBox.Text = "";
@@ -152,10 +188,12 @@ namespace PayrollHelper
                 usernameTextBox.Text = "Введите имя пользователя";
                 usernameTextBox.ForeColor = SystemColors.GrayText;
             }
+            ValidateLoginField();
         }
 
         private void passwordTextBox_Enter(object sender, EventArgs e)
         {
+            HighlightInvalidField(passwordTextBox, true);
             if (passwordTextBox.Text == "Введите пароль")
             {
                 passwordTextBox.Text = "";
@@ -172,6 +210,7 @@ namespace PayrollHelper
                 passwordTextBox.Text = "Введите пароль";
                 passwordTextBox.ForeColor = SystemColors.GrayText;
             }
+            ValidatePasswordField();
         }
     }
 

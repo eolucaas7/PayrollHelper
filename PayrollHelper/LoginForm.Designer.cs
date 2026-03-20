@@ -34,6 +34,7 @@
             label1 = new Label();
             label2 = new Label();
             label3 = new Label();
+            llCreateUser = new LinkLabel();
             SuspendLayout();
             // 
             // usernameTextBox
@@ -97,12 +98,24 @@
             label3.TabIndex = 5;
             label3.Text = "Пароль";
             // 
+            // llCreateUser
+            // 
+            llCreateUser.Cursor = Cursors.Hand;
+            llCreateUser.Location = new Point(86, 195);
+            llCreateUser.Name = "llCreateUser";
+            llCreateUser.Size = new Size(191, 20);
+            llCreateUser.TabIndex = 6;
+            llCreateUser.TabStop = true;
+            llCreateUser.Text = "Создать нового пользователя";
+            llCreateUser.TextAlign = ContentAlignment.MiddleCenter;
+            // 
             // LoginForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.ControlLight;
-            ClientSize = new Size(334, 211);
+            ClientSize = new Size(334, 224);
+            Controls.Add(llCreateUser);
             Controls.Add(label3);
             Controls.Add(label2);
             Controls.Add(label1);
@@ -128,5 +141,6 @@
         private Label label1;
         private Label label2;
         private Label label3;
+        private LinkLabel llCreateUser;
     }
 }
