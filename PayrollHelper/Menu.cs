@@ -28,12 +28,23 @@ namespace PayrollHelper
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             base.OnFormClosing(e);
+            if (e.CloseReason == CloseReason.UserClosing)
+            {
+                Application.Exit();
+            }
+        }
+
+        /*
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
             // Если мы не скрыли форму для возврата к логину, выходим из приложения
             if (this.Visible)
             {
                 Application.Exit();
             }
         }
+        */
 
         private void Form_MouseClick(object sender, MouseEventArgs e)
         {
@@ -47,9 +58,7 @@ namespace PayrollHelper
         {
             if (e.KeyCode == Keys.Escape)
             {
-                this.Hide();
-                LoginForm loginForm = new LoginForm();
-                loginForm.Show();
+                this.Close();
             }
         }
 

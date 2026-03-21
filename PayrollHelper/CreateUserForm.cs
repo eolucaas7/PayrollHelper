@@ -159,6 +159,7 @@ namespace PayrollHelper
             }
         }
 
+        /*
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             base.OnFormClosing(e);
@@ -179,5 +180,6 @@ namespace PayrollHelper
                 }
             }
         }
+        */
     }
 }

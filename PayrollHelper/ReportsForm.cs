@@ -256,6 +256,7 @@ namespace PayrollHelper
             return reportText.ToString();
         }
 
+        /*
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             base.OnFormClosing(e);
@@ -276,5 +277,6 @@ namespace PayrollHelper
                 }
             }
         }
+        */
     }
 }
