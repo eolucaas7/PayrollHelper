@@ -82,6 +82,16 @@ namespace PayrollHelper
             }
         }
 
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
+            // Если мы не скрыли форму для открытия меню, значит мы хотим выйти
+            if (this.Visible)
+            {
+                Application.Exit();
+            }
+        }
+
         private void InitializeUsersFile()
         {
             if (!File.Exists(UsersFilePath))

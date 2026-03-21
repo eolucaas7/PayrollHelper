@@ -25,6 +25,16 @@ namespace PayrollHelper
             }
         }
 
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
+            // Если мы не скрыли форму для возврата к логину, выходим из приложения
+            if (this.Visible)
+            {
+                Application.Exit();
+            }
+        }
+
         private void Form_MouseClick(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
@@ -81,6 +91,13 @@ namespace PayrollHelper
             ReportsForm reportsForm = new ReportsForm();
             reportsForm.FormClosed += (s, args) => this.Show();
             reportsForm.ShowDialog();
+        }
+
+        private void buttonLogout_Click(object sender, EventArgs e)
+        {
+            this.Hide();
+            LoginForm loginForm = new LoginForm();
+            loginForm.Show();
         }
     }
 }

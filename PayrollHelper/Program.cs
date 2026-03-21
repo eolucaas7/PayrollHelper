@@ -23,6 +23,8 @@ namespace PayrollHelper
             // Инициализация контекста (Теперь типы совпадают)
             dbContext = new PayrollDbContext(optionsBuilder.Options);
 
+            Application.ApplicationExit += (s, e) => dbContext?.Dispose();
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new LoginForm());

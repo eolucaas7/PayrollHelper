@@ -34,6 +34,7 @@
             label1 = new Label();
             buttonManageTaxes = new Button();
             buttonManagePayments = new Button();
+            buttonLogout = new Button();
             SuspendLayout();
             // 
             // buttonDashBoard
@@ -46,7 +47,7 @@
             buttonDashBoard.Name = "buttonDashBoard";
             buttonDashBoard.Size = new Size(200, 40);
             buttonDashBoard.TabIndex = 0;
-            buttonDashBoard.Text = "Управление персоналом";
+            buttonDashBoard.Text = "👨‍💼 Управление персоналом";
             buttonDashBoard.UseVisualStyleBackColor = false;
             buttonDashBoard.Click += buttonDashBoard_Click;
             // 
@@ -56,11 +57,11 @@
             buttonEditDatabase.Cursor = Cursors.Hand;
             buttonEditDatabase.FlatStyle = FlatStyle.Flat;
             buttonEditDatabase.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point);
-            buttonEditDatabase.Location = new Point(100, 248);
+            buttonEditDatabase.Location = new Point(100, 208);
             buttonEditDatabase.Name = "buttonEditDatabase";
             buttonEditDatabase.Size = new Size(200, 40);
             buttonEditDatabase.TabIndex = 1;
-            buttonEditDatabase.Text = "Редактирование БД";
+            buttonEditDatabase.Text = "🛠️ Редактирование БД";
             buttonEditDatabase.UseVisualStyleBackColor = false;
             buttonEditDatabase.Click += buttonEditDatabase_Click;
             // 
@@ -70,11 +71,11 @@
             buttonReport.Cursor = Cursors.Hand;
             buttonReport.FlatStyle = FlatStyle.Flat;
             buttonReport.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point);
-            buttonReport.Location = new Point(100, 307);
+            buttonReport.Location = new Point(100, 254);
             buttonReport.Name = "buttonReport";
             buttonReport.Size = new Size(200, 40);
             buttonReport.TabIndex = 2;
-            buttonReport.Text = "Формирование отчетов";
+            buttonReport.Text = "🖨️ Формирование отчетов";
             buttonReport.UseVisualStyleBackColor = false;
             buttonReport.Click += buttonReport_Click;
             // 
@@ -96,11 +97,11 @@
             buttonManageTaxes.Cursor = Cursors.Hand;
             buttonManageTaxes.FlatStyle = FlatStyle.Flat;
             buttonManageTaxes.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point);
-            buttonManageTaxes.Location = new Point(100, 130);
+            buttonManageTaxes.Location = new Point(100, 116);
             buttonManageTaxes.Name = "buttonManageTaxes";
             buttonManageTaxes.Size = new Size(200, 40);
             buttonManageTaxes.TabIndex = 4;
-            buttonManageTaxes.Text = "Управление налогами";
+            buttonManageTaxes.Text = "📑 Управление налогами";
             buttonManageTaxes.UseVisualStyleBackColor = false;
             buttonManageTaxes.Click += buttonManageTaxes_Click;
             // 
@@ -110,20 +111,35 @@
             buttonManagePayments.Cursor = Cursors.Hand;
             buttonManagePayments.FlatStyle = FlatStyle.Flat;
             buttonManagePayments.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point);
-            buttonManagePayments.Location = new Point(100, 188);
+            buttonManagePayments.Location = new Point(100, 162);
             buttonManagePayments.Name = "buttonManagePayments";
             buttonManagePayments.Size = new Size(200, 40);
             buttonManagePayments.TabIndex = 5;
-            buttonManagePayments.Text = "Управление выплатами";
+            buttonManagePayments.Text = "💰 Управление выплатами";
             buttonManagePayments.UseVisualStyleBackColor = false;
             buttonManagePayments.Click += buttonManagePayments_Click;
+            // 
+            // buttonLogout
+            // 
+            buttonLogout.BackColor = Color.SandyBrown;
+            buttonLogout.Cursor = Cursors.Hand;
+            buttonLogout.FlatStyle = FlatStyle.Flat;
+            buttonLogout.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point);
+            buttonLogout.Location = new Point(100, 300);
+            buttonLogout.Name = "buttonLogout";
+            buttonLogout.Size = new Size(200, 40);
+            buttonLogout.TabIndex = 6;
+            buttonLogout.Text = "🚪 Выйти из аккаунта";
+            buttonLogout.UseVisualStyleBackColor = false;
+            buttonLogout.Click += buttonLogout_Click;
             // 
             // Menu
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.ControlLight;
-            ClientSize = new Size(384, 381);
+            ClientSize = new Size(384, 357);
+            Controls.Add(buttonLogout);
             Controls.Add(buttonManagePayments);
             Controls.Add(buttonManageTaxes);
             Controls.Add(label1);
@@ -147,5 +163,6 @@
         private Label label1;
         private Button buttonManageTaxes;
         private Button buttonManagePayments;
+        private Button buttonLogout;
     }
 }
