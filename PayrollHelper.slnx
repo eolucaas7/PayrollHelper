@@ -1,3 +1,4 @@
 <Solution>
+  <Project Path="PayrollHelper.Tests/PayrollHelper.Tests.csproj" Id="236aad6b-54f1-4bf6-931a-7c942eaaac14" />
   <Project Path="PayrollHelper/PayrollHelper.csproj" />
 </Solution>
