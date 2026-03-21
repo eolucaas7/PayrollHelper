@@ -483,7 +483,7 @@ namespace PayrollHelper
 
                 if (employee == null)
                 {
-                    MessageBox.Show("Сотрудник не выбран.");
+                    MessageBox.Show("Сотрудник не выбран.", "Предупреждение", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
@@ -512,7 +512,7 @@ namespace PayrollHelper
                     };
                     Program.dbContext.Payments.Add(p);
                     Program.dbContext.SaveChanges();
-                    MessageBox.Show($"Выплата специальной суммы ({finalAmount} руб.) успешно проведена.");
+                    MessageBox.Show($"Выплата специальной суммы ({finalAmount} руб.) успешно проведена.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 else
                 {
@@ -525,7 +525,7 @@ namespace PayrollHelper
 
                         if (salaryInfo == null)
                         {
-                            MessageBox.Show("Ставка оклада не найдена в базе данных.");
+                            MessageBox.Show("Ставка оклада не найдена в базе данных.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                             return;
                         }
 
@@ -549,14 +549,14 @@ namespace PayrollHelper
                         };
                         Program.dbContext.Payments.Add(p);
                         Program.dbContext.SaveChanges();
-                        MessageBox.Show($"Зарплата ({finalAmount} руб.) начислена сотруднику {empName}.");
+                        MessageBox.Show($"Зарплата ({finalAmount} руб.) начислена сотруднику {empName}.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     else if (comboPaymentType.Text == "Премия")
                     {
                         var bonusInfo = Program.dbContext.SalaryAndBonuses.FirstOrDefault(s => s.PaymentType == comboBonusType.Text);
                         if (bonusInfo == null)
                         {
-                            MessageBox.Show("Вид премии не найден.");
+                            MessageBox.Show("Вид премии не найден.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                             return;
                         }
 
@@ -568,7 +568,7 @@ namespace PayrollHelper
                         };
                         Program.dbContext.Payments.Add(p);
                         Program.dbContext.SaveChanges();
-                        MessageBox.Show($"Премия ({bonusInfo.DefaultAmount ?? 0} руб.) успешно начислена.");
+                        MessageBox.Show($"Премия ({bonusInfo.DefaultAmount ?? 0} руб.) успешно начислена.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
             }
