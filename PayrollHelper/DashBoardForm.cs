@@ -44,7 +44,7 @@ namespace PayrollHelper
             comboPaymentType.SelectedIndex = 0;
 
             comboBonusType.Visible = false;
-            lblBonusType.Visible = false; 
+            lblBonusType.Visible = false;
             textSpecialAmount.Visible = false;
 
             // ПРИВЯЗКА СОБЫТИЙ ВАЛИДАЦИИ (ВЫПЛАТЫ И СОТРУДНИКИ)
@@ -286,7 +286,7 @@ namespace PayrollHelper
                 Program.dbContext.SaveChanges();
 
                 MessageBox.Show($"Должность '{posName}' успешно добавлена!", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                
+
                 // Очистка полей
                 txtPositionName.Clear();
                 txtPositionDescription.Clear();
@@ -294,7 +294,7 @@ namespace PayrollHelper
 
                 // Обновляем списки
                 LoadPositionsToList();
-                LoadPostInComboBox(); 
+                LoadPostInComboBox();
             }
             catch (Exception ex)
             {
@@ -405,7 +405,7 @@ namespace PayrollHelper
                 Program.dbContext.SaveChanges();
 
                 MessageBox.Show("Сотрудник успешно добавлен!", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                
+
                 textFullName.Clear();
                 maskedPhoneNumber.Clear();
                 textAddress.Clear();
@@ -504,11 +504,12 @@ namespace PayrollHelper
                     double taxRate = (double)(ndflTax?.TaxRate ?? 0);
                     double finalAmount = Math.Round(specialAmount - (specialAmount * taxRate / 100), 2);
 
-                    var p = new Payment { 
-                        PaymentType = "Специальная сумма", 
-                        PaymentAmount = (decimal)finalAmount, 
-                        PaymentDate = paymentDate, 
-                        EmployeeId = employee.EmployeeId 
+                    var p = new Payment
+                    {
+                        PaymentType = "Специальная сумма",
+                        PaymentAmount = (decimal)finalAmount,
+                        PaymentDate = paymentDate,
+                        EmployeeId = employee.EmployeeId
                     };
                     Program.dbContext.Payments.Add(p);
                     Program.dbContext.SaveChanges();
@@ -541,11 +542,12 @@ namespace PayrollHelper
                         double baseAmount = (double)(salaryInfo.DefaultAmount ?? 0);
                         double finalAmount = Math.Round(baseAmount - (baseAmount * totalTaxRate / 100), 2);
 
-                        var p = new Payment { 
-                            PaymentType = "Зарплата", 
-                            PaymentAmount = (decimal)finalAmount, 
-                            PaymentDate = paymentDate, 
-                            EmployeeId = employee.EmployeeId 
+                        var p = new Payment
+                        {
+                            PaymentType = "Зарплата",
+                            PaymentAmount = (decimal)finalAmount,
+                            PaymentDate = paymentDate,
+                            EmployeeId = employee.EmployeeId
                         };
                         Program.dbContext.Payments.Add(p);
                         Program.dbContext.SaveChanges();
@@ -560,11 +562,12 @@ namespace PayrollHelper
                             return;
                         }
 
-                        var p = new Payment { 
-                            PaymentType = "Премия", 
-                            PaymentAmount = bonusInfo.DefaultAmount ?? 0, 
-                            PaymentDate = paymentDate, 
-                            EmployeeId = employee.EmployeeId 
+                        var p = new Payment
+                        {
+                            PaymentType = "Премия",
+                            PaymentAmount = bonusInfo.DefaultAmount ?? 0,
+                            PaymentDate = paymentDate,
+                            EmployeeId = employee.EmployeeId
                         };
                         Program.dbContext.Payments.Add(p);
                         Program.dbContext.SaveChanges();
@@ -634,29 +637,5 @@ namespace PayrollHelper
                 LoadPositionsToList();
             }
         }
-
-        /*
-        protected override void OnFormClosing(FormClosingEventArgs e)
-        {
-            base.OnFormClosing(e);
-            // Если форма закрывается пользователем и нет других видимых форм (кроме скрытого логина), выходим
-            if (e.CloseReason == CloseReason.UserClosing)
-            {
-                bool otherVisibleForms = false;
-                foreach (Form f in Application.OpenForms)
-                {
-                    if (f != this && f.Visible)
-                    {
-                        otherVisibleForms = true;
-                        break;
-                    }
-                }
-                if (!otherVisibleForms)
-                {
-                    Application.Exit();
-                }
-            }
-        }
-        */
     }
 }

@@ -34,18 +34,6 @@ namespace PayrollHelper
             }
         }
 
-        /*
-        protected override void OnFormClosing(FormClosingEventArgs e)
-        {
-            base.OnFormClosing(e);
-            // Если мы не скрыли форму для возврата к логину, выходим из приложения
-            if (this.Visible)
-            {
-                Application.Exit();
-            }
-        }
-        */
-
         private void Form_MouseClick(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)

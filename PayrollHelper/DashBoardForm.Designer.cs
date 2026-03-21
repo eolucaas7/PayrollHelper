@@ -73,7 +73,7 @@
             tabControl.Location = new Point(12, 12);
             tabControl.Name = "tabControl";
             tabControl.SelectedIndex = 0;
-            tabControl.Size = new Size(520, 263);
+            tabControl.Size = new Size(728, 263);
             tabControl.TabIndex = 0;
             tabControl.TabStop = false;
             tabControl.SelectedIndexChanged += tabControl1_SelectedIndexChanged;
@@ -92,7 +92,7 @@
             tabPayments.Location = new Point(4, 24);
             tabPayments.Name = "tabPayments";
             tabPayments.Padding = new Padding(3);
-            tabPayments.Size = new Size(512, 235);
+            tabPayments.Size = new Size(720, 235);
             tabPayments.TabIndex = 0;
             tabPayments.Text = "Выплаты сотрудникам";
             tabPayments.UseVisualStyleBackColor = true;
@@ -322,7 +322,7 @@
             tabPositions.Location = new Point(4, 24);
             tabPositions.Name = "tabPositions";
             tabPositions.Padding = new Padding(3);
-            tabPositions.Size = new Size(512, 235);
+            tabPositions.Size = new Size(720, 235);
             tabPositions.TabIndex = 2;
             tabPositions.Text = "Должности";
             tabPositions.UseVisualStyleBackColor = true;
@@ -331,7 +331,7 @@
             // 
             lblExistingPositions.AutoSize = true;
             lblExistingPositions.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold, GraphicsUnit.Point);
-            lblExistingPositions.Location = new Point(15, 132);
+            lblExistingPositions.Location = new Point(425, 15);
             lblExistingPositions.Name = "lblExistingPositions";
             lblExistingPositions.Size = new Size(162, 15);
             lblExistingPositions.TabIndex = 7;
@@ -343,9 +343,9 @@
             lstPositions.FormattingEnabled = true;
             lstPositions.IntegralHeight = false;
             lstPositions.ItemHeight = 15;
-            lstPositions.Location = new Point(15, 163);
+            lstPositions.Location = new Point(425, 47);
             lstPositions.Name = "lstPositions";
-            lstPositions.Size = new Size(287, 66);
+            lstPositions.Size = new Size(287, 182);
             lstPositions.TabIndex = 6;
             // 
             // btnAddPosition
@@ -411,7 +411,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(548, 287);
+            ClientSize = new Size(752, 287);
             Controls.Add(tabControl);
             FormBorderStyle = FormBorderStyle.FixedSingle;
             KeyPreview = true;

@@ -459,28 +459,5 @@ namespace PayrollHelper
                 MessageBox.Show($"Ошибка при получении данных: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
-        /*
-        protected override void OnFormClosing(FormClosingEventArgs e)
-        {
-            base.OnFormClosing(e);
-            if (e.CloseReason == CloseReason.UserClosing)
-            {
-                bool otherVisibleForms = false;
-                foreach (Form f in Application.OpenForms)
-                {
-                    if (f != this && f.Visible)
-                    {
-                        otherVisibleForms = true;
-                        break;
-                    }
-                }
-                if (!otherVisibleForms)
-                {
-                    Application.Exit();
-                }
-            }
-        }
-        */
     }
 }
