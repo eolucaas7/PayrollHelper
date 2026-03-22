@@ -25,14 +25,39 @@ namespace PayrollHelper
             this.KeyDown += LoginForm_KeyDown;
             this.MouseClick += Form_MouseClick;
 
+            grpReportParams.MouseClick += Form_MouseClick;
+            grpSave.MouseClick += Form_MouseClick;
+            clbPaymentTypes.MouseClick += Form_MouseClick;
+            if (lblPaymentTypes != null) lblPaymentTypes.MouseClick += Form_MouseClick;
+
             // Настройка lblCurrentPath для корректного отображения длинных путей
             lblCurrentPath.AutoSize = false;
             lblCurrentPath.Width = 350;
             lblCurrentPath.TextAlign = ContentAlignment.MiddleLeft;
 
+            // Настройка выбора периода (только месяц и год)
+            dtpPeriod.Format = DateTimePickerFormat.Custom;
+            dtpPeriod.CustomFormat = "MMMM yyyy";
+            dtpPeriod.ShowUpDown = true;
+
+            // Настройка типов отчетов
             reportTypeComboBox.Items.Clear();
-            reportTypeComboBox.Items.Add("Отчет по зарплате");
-            reportTypeComboBox.Items.Add("Отчет по премии");
+            reportTypeComboBox.Items.Add("Зарплатная ведомость");
+            reportTypeComboBox.Items.Add("Премиальные выплаты");
+            reportTypeComboBox.Items.Add("Особые суммы начисления");
+            reportTypeComboBox.SelectedIndex = -1; // Чтобы сработало событие при установке индекса ниже
+            reportTypeComboBox.SelectedIndexChanged += reportTypeComboBox_SelectedIndexChanged;
+
+            // Настройка форматов
+            cmbFormat.Items.Clear();
+            cmbFormat.Items.Add("Текстовый (.txt)");
+            cmbFormat.Items.Add("CSV (.csv)");
+            cmbFormat.SelectedIndex = 0;
+
+            // Загрузка типов выплат
+            LoadPaymentTypes();
+
+            // Установка начального типа отчета
             reportTypeComboBox.SelectedIndex = 0;
 
             // Загрузка и проверка пути
@@ -65,6 +90,63 @@ namespace PayrollHelper
             UpdatePathLabel(savedPath);
         }
 
+        private void LoadPaymentTypes()
+        {
+            try
+            {
+                var types = Program.dbContext.SalaryAndBonuses
+                    .Select(s => s.PaymentType)
+                    .Distinct()
+                    .OrderBy(t => t)
+                    .ToList();
+
+                clbPaymentTypes.Items.Clear();
+                foreach (var t in types)
+                {
+                    clbPaymentTypes.Items.Add(t);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при загрузке типов выплат: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void reportTypeComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (reportTypeComboBox.SelectedIndex < 0) return;
+
+            string selectedReport = reportTypeComboBox.SelectedItem.ToString();
+
+            // Снимаем все отметки
+            for (int i = 0; i < clbPaymentTypes.Items.Count; i++)
+            {
+                clbPaymentTypes.SetItemChecked(i, false);
+            }
+
+            // Автоматическая отметка на основе типа отчета
+            for (int i = 0; i < clbPaymentTypes.Items.Count; i++)
+            {
+                string itemText = clbPaymentTypes.Items[i].ToString();
+
+                if (selectedReport == "Зарплатная ведомость")
+                {
+                    if (itemText.Contains("Оклад") || itemText.Contains("Зарплата"))
+                        clbPaymentTypes.SetItemChecked(i, true);
+                }
+                else if (selectedReport == "Премиальные выплаты")
+                {
+                    if (itemText.Contains("Премия"))
+                        clbPaymentTypes.SetItemChecked(i, true);
+                }
+                else if (selectedReport == "Особые суммы начисления")
+                {
+                    if (itemText.Contains("Специальная сумма"))
+                        clbPaymentTypes.SetItemChecked(i, true);
+                }
+            }
+        }
+
         private void Form_MouseClick(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
@@ -86,7 +168,6 @@ namespace PayrollHelper
             if (!string.IsNullOrEmpty(path))
             {
                 lblCurrentPath.Text = path;
-                // Подсказка при наведении, если путь очень длинный
                 ToolTip toolTip = new ToolTip();
                 toolTip.SetToolTip(lblCurrentPath, path);
             }
@@ -100,7 +181,13 @@ namespace PayrollHelper
         {
             if (reportTypeComboBox.SelectedIndex < 0)
             {
-                MessageBox.Show("Не выбран тип выплаты!");
+                MessageBox.Show("Не выбран тип отчета!", "Предупреждение", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (clbPaymentTypes.CheckedItems.Count == 0)
+            {
+                MessageBox.Show("Не выбраны типы выплат для отчета", "Предупреждение", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -111,11 +198,14 @@ namespace PayrollHelper
                 return;
             }
 
-            string reportType = reportTypeComboBox.SelectedItem.ToString().ToLower();
-            string reportText = GetReportText(reportType);
+            string reportType = reportTypeComboBox.SelectedItem.ToString();
+            string selectedFormat = cmbFormat.SelectedItem.ToString();
+            string extension = selectedFormat.Contains(".csv") ? ".csv" : ".txt";
+            
+            string reportContent = extension == ".csv" ? GetReportCsv() : GetReportText(reportType);
             string reportFolderPath = Settings.Default.ReportFolderPath;
 
-            SaveReport(reportText, reportFolderPath, reportType);
+            SaveReport(reportContent, reportFolderPath, reportType, extension);
         }
 
         private void btnSelectReportFolder_Click(object sender, EventArgs e)
@@ -130,8 +220,6 @@ namespace PayrollHelper
                     {
                         Settings.Default.ReportFolderPath = folderDialog.SelectedPath;
                         Settings.Default.Save();
-                        
-                        // Сразу обновляем текст в лейбле на форме
                         UpdatePathLabel(folderDialog.SelectedPath);
                     }
                 }
@@ -142,7 +230,7 @@ namespace PayrollHelper
             }
         }
 
-        private void SaveReport(string reportText, string folderPath, string reportType)
+        private void SaveReport(string reportContent, string folderPath, string reportType, string extension)
         {
             try
             {
@@ -157,10 +245,11 @@ namespace PayrollHelper
                     Directory.CreateDirectory(folderPath);
                 }
 
-                string fileName = $"{reportType}_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+                // Формируем имя файла: ТипОтчета dd_MM_yyyy.ext
+                string fileName = $"{reportType} {DateTime.Now:dd_MM_yyyy}{extension}";
                 string fullPath = Path.Combine(folderPath, fileName);
 
-                File.WriteAllText(fullPath, reportText);
+                File.WriteAllText(fullPath, reportContent, Encoding.UTF8);
                 MessageBox.Show($"Отчет успешно сохранен в:\n{fullPath}", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
@@ -174,33 +263,18 @@ namespace PayrollHelper
             employees.Clear();
             try
             {
+                int year = dtpPeriod.Value.Year;
+                int month = dtpPeriod.Value.Month;
+
+                // Получаем выбранные типы выплат
+                var selectedTypes = clbPaymentTypes.CheckedItems.Cast<string>().ToList();
+
                 var query = Program.dbContext.Payments
                     .Include(p => p.Employee)
                         .ThenInclude(e => e.PostNumberNavigation)
+                    .Where(p => p.PaymentDate.Year == year && p.PaymentDate.Month == month)
+                    .Where(p => selectedTypes.Contains(p.PaymentType))
                     .AsQueryable();
-
-                string salaryFilter = "\u041e\u043a\u043b\u0430\u0434"; // "Оклад"
-                string bonusFilter = "\u041f\u0440\u0435\u043c\u0438\u044f"; // "Премия"
-                string sumFilter = "\u0441\u0443\u043c\u043c\u0430"; // "сумма"
-
-                int selectedIndex = reportTypeComboBox.SelectedIndex;
-
-                if (selectedIndex == 0) // Отчет по зарплате
-                {
-                    if (includeBonusesCheckBox.Checked)
-                    {
-                        query = query.Where(p => EF.Functions.ILike(p.PaymentType, $"%{salaryFilter}%") 
-                                              || EF.Functions.ILike(p.PaymentType, $"%{sumFilter}%"));
-                    }
-                    else
-                    {
-                        query = query.Where(p => EF.Functions.ILike(p.PaymentType, $"%{salaryFilter}%"));
-                    }
-                }
-                else // Отчет по премии
-                {
-                    query = query.Where(p => EF.Functions.ILike(p.PaymentType, $"%{bonusFilter}%"));
-                }
 
                 var results = query.Select(p => new
                 {
@@ -212,7 +286,8 @@ namespace PayrollHelper
 
                 if (results.Count == 0)
                 {
-                    MessageBox.Show("Записи в БД найдены, но по выбранному фильтру (" + (selectedIndex == 0 ? "Зарплата" : "Премия") + ") ничего нет.", "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    string period = dtpPeriod.Value.ToString("MMMM yyyy");
+                    MessageBox.Show($"Выплат за период {period} по выбранным типам не найдено.", "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
 
@@ -224,27 +299,18 @@ namespace PayrollHelper
             catch (Exception ex)
             {
                 string inner = ex.InnerException != null ? $"\nПодробности: {ex.InnerException.Message}" : "";
-                MessageBox.Show($"Ошибка при получении данных: {ex.Message}{inner}", "Ошибка EF Core", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Ошибка при получении данных: {ex.Message}{inner}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private string GetReportText(string reportType)
         {
             StringBuilder reportText = new StringBuilder();
+            string period = dtpPeriod.Value.ToString("MMMM yyyy");
 
-            switch (reportType)
-            {
-                case "отчет по зарплате":
-                    reportText.AppendLine("Отчет по заработной плате сотрудников");
-                    reportText.AppendLine("------------------------------------------------------------");
-                    break;
-
-                case "отчет по премии":
-                    reportText.AppendLine("Отчет по премиям сотрудников");
-                    reportText.AppendLine("------------------------------------------------------------");
-                    break;
-            }
-
+            reportText.AppendLine(reportType);
+            reportText.AppendLine($"Период: {period}");
+            reportText.AppendLine("------------------------------------------------------------");
             reportText.AppendLine("Данные по сотрудникам:");
             reportText.AppendLine("------------------------------------------------------------");
 
@@ -254,6 +320,19 @@ namespace PayrollHelper
             }
 
             return reportText.ToString();
+        }
+
+        private string GetReportCsv()
+        {
+            StringBuilder csv = new StringBuilder();
+            csv.AppendLine("ФИО;Должность;Сумма;Тип");
+
+            foreach (var employee in employees)
+            {
+                csv.AppendLine($"{employee.EmployeeName};{employee.Position};{employee.PaymentAmount:F2};{employee.PaymentType}");
+            }
+
+            return csv.ToString();
         }
     }
 }
