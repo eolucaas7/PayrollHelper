@@ -68,6 +68,8 @@ namespace PayrollHelper
             if (btnAddPosition != null) btnAddPosition.Click += btnAddPosition_Click;
             if (txtPositionName != null)
             {
+                txtPositionName.KeyPress += txtPositionName_KeyPress;
+                txtPositionName.TextChanged += txtPositionName_TextChanged;
                 txtPositionName.Leave += (s, e) => HighlightInvalidField(txtPositionName, txtPositionName.Text.Trim().Length >= 3);
                 txtPositionName.Enter += (s, e) => HighlightInvalidField(txtPositionName, true);
             }
@@ -215,6 +217,29 @@ namespace PayrollHelper
         // ==========================================================
         // Вкладка "ДОЛЖНОСТИ" (tabPositions)
         // ==========================================================
+
+        private void txtPositionName_KeyPress(object? sender, KeyPressEventArgs e)
+        {
+            if (char.IsControl(e.KeyChar)) return;
+            // Разрешить только буквы, пробел и дефис
+            if (!char.IsLetter(e.KeyChar) && e.KeyChar != ' ' && e.KeyChar != '-')
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void txtPositionName_TextChanged(object? sender, EventArgs e)
+        {
+            if (txtPositionName == null) return;
+            string input = txtPositionName.Text;
+            string filtered = Regex.Replace(input, @"[^a-zA-Zа-яА-ЯёЁ\s-]", "");
+            if (input != filtered)
+            {
+                int cursor = txtPositionName.SelectionStart;
+                txtPositionName.Text = filtered;
+                txtPositionName.SelectionStart = Math.Min(cursor, filtered.Length);
+            }
+        }
 
         private void LoadPositionsToList()
         {
