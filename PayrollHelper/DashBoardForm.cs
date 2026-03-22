@@ -38,13 +38,6 @@ namespace PayrollHelper
             tabPositions.MouseClick += DashboardForm_MouseClick;
 
             // ИНИЦИАЛИЗАЦИЯ ВЫПЛАТ
-            comboPaymentType.Items.Clear();
-            comboPaymentType.Items.Add("Зарплата");
-            comboPaymentType.Items.Add("Премия");
-            comboPaymentType.SelectedIndex = 0;
-
-            comboBonusType.Visible = false;
-            lblBonusType.Visible = false;
             textSpecialAmount.Visible = false;
 
             // ПРИВЯЗКА СОБЫТИЙ ВАЛИДАЦИИ (ВЫПЛАТЫ И СОТРУДНИКИ)
@@ -111,7 +104,7 @@ namespace PayrollHelper
         {
             if (Program.dbContext == null) return;
             LoadEmployees();
-            LoadBonusTypes();
+            LoadPaymentTypes();
             LoadPostInComboBox();
         }
 
@@ -476,24 +469,24 @@ namespace PayrollHelper
             }
         }
 
-        private void LoadBonusTypes()
+        private void LoadPaymentTypes()
         {
             try
             {
-                var bonuses = Program.dbContext.SalaryAndBonuses
-                    .Where(s => EF.Functions.ILike(s.PaymentType, "Премия%"))
+                var types = Program.dbContext.SalaryAndBonuses
+                    .OrderBy(s => s.PaymentType)
                     .Select(s => s.PaymentType).ToList();
 
-                comboBonusType.Items.Clear();
-                foreach (var type in bonuses)
+                comboPaymentType.Items.Clear();
+                foreach (var type in types)
                 {
-                    if (!string.IsNullOrEmpty(type)) comboBonusType.Items.Add(type);
+                    if (!string.IsNullOrEmpty(type)) comboPaymentType.Items.Add(type);
                 }
-                if (comboBonusType.Items.Count > 0) comboBonusType.SelectedIndex = 0;
+                if (comboPaymentType.Items.Count > 0) comboPaymentType.SelectedIndex = 0;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка загрузки премий: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Ошибка загрузки типов выплат: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -542,62 +535,47 @@ namespace PayrollHelper
                 }
                 else
                 {
-                    if (comboPaymentType.Text == "Зарплата")
+                    string selectedPaymentType = comboPaymentType.Text;
+                    var paymentInfo = Program.dbContext.SalaryAndBonuses
+                        .Include(s => s.Taxations)
+                        .FirstOrDefault(s => s.PaymentType == selectedPaymentType);
+
+                    if (paymentInfo == null)
                     {
-                        string postName = employee.PostNumberNavigation?.Name;
-                        var salaryInfo = Program.dbContext.SalaryAndBonuses
-                            .FirstOrDefault(s => EF.Functions.ILike(s.PaymentType, $"%{postName}%"))
-                            ?? Program.dbContext.SalaryAndBonuses.FirstOrDefault(s => EF.Functions.ILike(s.PaymentType, "Оклад"));
-
-                        if (salaryInfo == null)
-                        {
-                            MessageBox.Show("Ставка оклада не найдена в базе данных.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            return;
-                        }
-
-                        var ndflTax = Program.dbContext.Taxations.FirstOrDefault(t => EF.Functions.ILike(t.TaxType, "НДФЛ"));
-                        double totalTaxRate = (double)(ndflTax?.TaxRate ?? 0);
-
-                        if (employee.Insurance == true)
-                        {
-                            var insTax = Program.dbContext.Taxations.FirstOrDefault(t => EF.Functions.ILike(t.TaxType, "%страхов%"));
-                            totalTaxRate += (double)(insTax?.TaxRate ?? 0);
-                        }
-
-                        double baseAmount = (double)(salaryInfo.DefaultAmount ?? 0);
-                        double finalAmount = Math.Round(baseAmount - (baseAmount * totalTaxRate / 100), 2);
-
-                        var p = new Payment
-                        {
-                            PaymentType = "Зарплата",
-                            PaymentAmount = (decimal)finalAmount,
-                            PaymentDate = paymentDate,
-                            EmployeeId = employee.EmployeeId
-                        };
-                        Program.dbContext.Payments.Add(p);
-                        Program.dbContext.SaveChanges();
-                        MessageBox.Show($"Зарплата ({finalAmount} руб.) начислена сотруднику {empName}.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show("Информация о выбранном типе выплаты не найдена.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
                     }
-                    else if (comboPaymentType.Text == "Премия")
+
+                    // Расчет налогов на основе привязанных к выплате налогов
+                    double totalTaxRate = 0;
+                    foreach (var tax in paymentInfo.Taxations)
                     {
-                        var bonusInfo = Program.dbContext.SalaryAndBonuses.FirstOrDefault(s => s.PaymentType == comboBonusType.Text);
-                        if (bonusInfo == null)
-                        {
-                            MessageBox.Show("Вид премии не найден.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            return;
-                        }
-
-                        var p = new Payment
-                        {
-                            PaymentType = "Премия",
-                            PaymentAmount = bonusInfo.DefaultAmount ?? 0,
-                            PaymentDate = paymentDate,
-                            EmployeeId = employee.EmployeeId
-                        };
-                        Program.dbContext.Payments.Add(p);
-                        Program.dbContext.SaveChanges();
-                        MessageBox.Show($"Премия ({bonusInfo.DefaultAmount ?? 0} руб.) успешно начислена.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        totalTaxRate += (double)tax.TaxRate;
                     }
+
+                    // Если у сотрудника есть страховка и налог на страховку не привязан явно к выплате
+                    if (employee.Insurance == true)
+                    {
+                        var insTax = Program.dbContext.Taxations.FirstOrDefault(t => EF.Functions.ILike(t.TaxType, "%страхов%"));
+                        if (insTax != null && !paymentInfo.Taxations.Any(t => t.Id == insTax.Id))
+                        {
+                            totalTaxRate += (double)insTax.TaxRate;
+                        }
+                    }
+
+                    double baseAmount = (double)(paymentInfo.DefaultAmount ?? 0);
+                    double finalAmount = Math.Round(baseAmount - (baseAmount * totalTaxRate / 100), 2);
+
+                    var p = new Payment
+                    {
+                        PaymentType = selectedPaymentType,
+                        PaymentAmount = (decimal)finalAmount,
+                        PaymentDate = paymentDate,
+                        EmployeeId = employee.EmployeeId
+                    };
+                    Program.dbContext.Payments.Add(p);
+                    Program.dbContext.SaveChanges();
+                    MessageBox.Show($"Выплата '{selectedPaymentType}' ({finalAmount} руб.) начислена сотруднику {empName}.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
             catch (Exception ex)
@@ -625,24 +603,6 @@ namespace PayrollHelper
             comboPaymentType.Visible = !isSpecial;
             comboPaymentType.Enabled = !isSpecial;
             lblPaymentType.Visible = !isSpecial;
-
-            if (isSpecial)
-            {
-                comboBonusType.Visible = false;
-                lblBonusType.Visible = false;
-            }
-            else
-            {
-                comboPaymentType_SelectedIndexChanged(null, null);
-            }
-        }
-
-        private void comboPaymentType_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            bool isBonus = comboPaymentType.Text == "Премия";
-            comboBonusType.Visible = isBonus;
-            comboBonusType.Enabled = isBonus;
-            lblBonusType.Visible = isBonus;
         }
 
         private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
@@ -651,7 +611,7 @@ namespace PayrollHelper
             if (tabControl.SelectedIndex == 0) // Выплаты
             {
                 LoadEmployees();
-                LoadBonusTypes();
+                LoadPaymentTypes();
             }
             else if (tabControl.SelectedIndex == 1) // Новый сотрудник
             {

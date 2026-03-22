@@ -34,10 +34,8 @@
             textSpecialAmount = new TextBox();
             checkSpecialAmount = new CheckBox();
             lblEmployee = new Label();
-            lblBonusType = new Label();
             lblPaymentType = new Label();
             comboEmployee = new ComboBox();
-            comboBonusType = new ComboBox();
             comboPaymentType = new ComboBox();
             tabNewEmployee = new TabPage();
             maskedPhoneNumber = new MaskedTextBox();
@@ -70,10 +68,10 @@
             tabControl.Controls.Add(tabPayments);
             tabControl.Controls.Add(tabNewEmployee);
             tabControl.Controls.Add(tabPositions);
-            tabControl.Location = new Point(12, 12);
+            tabControl.Location = new Point(-1, 5);
             tabControl.Name = "tabControl";
             tabControl.SelectedIndex = 0;
-            tabControl.Size = new Size(728, 263);
+            tabControl.Size = new Size(754, 281);
             tabControl.TabIndex = 0;
             tabControl.TabStop = false;
             tabControl.SelectedIndexChanged += tabControl1_SelectedIndexChanged;
@@ -84,15 +82,13 @@
             tabPayments.Controls.Add(textSpecialAmount);
             tabPayments.Controls.Add(checkSpecialAmount);
             tabPayments.Controls.Add(lblEmployee);
-            tabPayments.Controls.Add(lblBonusType);
             tabPayments.Controls.Add(lblPaymentType);
             tabPayments.Controls.Add(comboEmployee);
-            tabPayments.Controls.Add(comboBonusType);
             tabPayments.Controls.Add(comboPaymentType);
             tabPayments.Location = new Point(4, 24);
             tabPayments.Name = "tabPayments";
             tabPayments.Padding = new Padding(3);
-            tabPayments.Size = new Size(720, 235);
+            tabPayments.Size = new Size(746, 253);
             tabPayments.TabIndex = 0;
             tabPayments.Text = "Выплаты сотрудникам";
             tabPayments.UseVisualStyleBackColor = true;
@@ -101,7 +97,7 @@
             // 
             buttonAddPayment.BackColor = Color.LightGreen;
             buttonAddPayment.FlatStyle = FlatStyle.Flat;
-            buttonAddPayment.Location = new Point(15, 135);
+            buttonAddPayment.Location = new Point(15, 145);
             buttonAddPayment.Name = "buttonAddPayment";
             buttonAddPayment.Size = new Size(160, 30);
             buttonAddPayment.TabIndex = 8;
@@ -111,7 +107,7 @@
             // 
             // textSpecialAmount
             // 
-            textSpecialAmount.Location = new Point(137, 180);
+            textSpecialAmount.Location = new Point(124, 101);
             textSpecialAmount.Name = "textSpecialAmount";
             textSpecialAmount.Size = new Size(100, 23);
             textSpecialAmount.TabIndex = 7;
@@ -122,7 +118,7 @@
             // 
             checkSpecialAmount.AutoSize = true;
             checkSpecialAmount.FlatStyle = FlatStyle.Flat;
-            checkSpecialAmount.Location = new Point(15, 180);
+            checkSpecialAmount.Location = new Point(15, 105);
             checkSpecialAmount.Name = "checkSpecialAmount";
             checkSpecialAmount.Size = new Size(103, 19);
             checkSpecialAmount.TabIndex = 6;
@@ -139,16 +135,6 @@
             lblEmployee.TabIndex = 5;
             lblEmployee.Text = "Сотрудник";
             lblEmployee.TextAlign = ContentAlignment.MiddleRight;
-            // 
-            // lblBonusType
-            // 
-            lblBonusType.AutoSize = true;
-            lblBonusType.Location = new Point(15, 97);
-            lblBonusType.Name = "lblBonusType";
-            lblBonusType.Size = new Size(73, 15);
-            lblBonusType.TabIndex = 4;
-            lblBonusType.Text = "Вид премии";
-            lblBonusType.TextAlign = ContentAlignment.MiddleRight;
             // 
             // lblPaymentType
             // 
@@ -170,14 +156,6 @@
             comboEmployee.Size = new Size(180, 23);
             comboEmployee.TabIndex = 2;
             // 
-            // comboBonusType
-            // 
-            comboBonusType.FormattingEnabled = true;
-            comboBonusType.Location = new Point(109, 97);
-            comboBonusType.Name = "comboBonusType";
-            comboBonusType.Size = new Size(150, 23);
-            comboBonusType.TabIndex = 1;
-            // 
             // comboPaymentType
             // 
             comboPaymentType.DropDownStyle = ComboBoxStyle.DropDownList;
@@ -186,7 +164,7 @@
             comboPaymentType.Name = "comboPaymentType";
             comboPaymentType.Size = new Size(150, 23);
             comboPaymentType.TabIndex = 0;
-            comboPaymentType.SelectedIndexChanged += comboPaymentType_SelectedIndexChanged;
+  
             // 
             // tabNewEmployee
             // 
@@ -203,7 +181,7 @@
             tabNewEmployee.Location = new Point(4, 24);
             tabNewEmployee.Name = "tabNewEmployee";
             tabNewEmployee.Padding = new Padding(3);
-            tabNewEmployee.Size = new Size(512, 235);
+            tabNewEmployee.Size = new Size(733, 246);
             tabNewEmployee.TabIndex = 1;
             tabNewEmployee.Text = "Добавление сотрудника";
             tabNewEmployee.UseVisualStyleBackColor = true;
@@ -322,9 +300,9 @@
             tabPositions.Location = new Point(4, 24);
             tabPositions.Name = "tabPositions";
             tabPositions.Padding = new Padding(3);
-            tabPositions.Size = new Size(720, 235);
+            tabPositions.Size = new Size(733, 246);
             tabPositions.TabIndex = 2;
-            tabPositions.Text = "Должности";
+            tabPositions.Text = "Добавление должности";
             tabPositions.UseVisualStyleBackColor = true;
             // 
             // lblExistingPositions
@@ -437,10 +415,8 @@
         private TextBox textSpecialAmount;
         private CheckBox checkSpecialAmount;
         private Label lblEmployee;
-        private Label lblBonusType;
         private Label lblPaymentType;
         private ComboBox comboEmployee;
-        private ComboBox comboBonusType;
         private ComboBox comboPaymentType;
         private TabPage tabNewEmployee;
         private TextBox textAddress;
