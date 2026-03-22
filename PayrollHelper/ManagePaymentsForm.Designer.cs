@@ -40,6 +40,7 @@
             grpPaymentList = new GroupBox();
             grpTaxSelection = new GroupBox();
             clbTaxes = new CheckedListBox();
+            btnUpdateTaxes = new Button();
             grpAddPayment.SuspendLayout();
             grpPaymentList.SuspendLayout();
             grpTaxSelection.SuspendLayout();
@@ -65,9 +66,9 @@
             // 
             // lblPaymentDescription
             // 
-            lblPaymentDescription.Location = new Point(6, 111);
+            lblPaymentDescription.Location = new Point(6, 106);
             lblPaymentDescription.Name = "lblPaymentDescription";
-            lblPaymentDescription.Size = new Size(120, 23);
+            lblPaymentDescription.Size = new Size(70, 23);
             lblPaymentDescription.TabIndex = 2;
             lblPaymentDescription.Text = "Описание:";
             lblPaymentDescription.TextAlign = ContentAlignment.MiddleRight;
@@ -92,12 +93,12 @@
             // txtPaymentDescription
             // 
             txtPaymentDescription.AcceptsReturn = true;
-            txtPaymentDescription.Location = new Point(6, 147);
+            txtPaymentDescription.Location = new Point(6, 132);
             txtPaymentDescription.MaxLength = 255;
             txtPaymentDescription.Multiline = true;
             txtPaymentDescription.Name = "txtPaymentDescription";
             txtPaymentDescription.ScrollBars = ScrollBars.Vertical;
-            txtPaymentDescription.Size = new Size(250, 60);
+            txtPaymentDescription.Size = new Size(401, 60);
             txtPaymentDescription.TabIndex = 7;
             // 
             // btnAddPayment
@@ -105,7 +106,7 @@
             btnAddPayment.BackColor = Color.LightGreen;
             btnAddPayment.Cursor = Cursors.Hand;
             btnAddPayment.FlatStyle = FlatStyle.Flat;
-            btnAddPayment.Location = new Point(6, 225);
+            btnAddPayment.Location = new Point(6, 208);
             btnAddPayment.Name = "btnAddPayment";
             btnAddPayment.Size = new Size(189, 35);
             btnAddPayment.TabIndex = 11;
@@ -126,6 +127,7 @@
             // 
             // grpAddPayment
             // 
+            grpAddPayment.Controls.Add(btnUpdateTaxes);
             grpAddPayment.Controls.Add(lblPaymentName);
             grpAddPayment.Controls.Add(txtPaymentName);
             grpAddPayment.Controls.Add(btnAddPayment);
@@ -178,6 +180,18 @@
             clbTaxes.Size = new Size(230, 292);
             clbTaxes.TabIndex = 0;
             // 
+            // btnUpdateTaxes
+            // 
+            btnUpdateTaxes.BackColor = Color.Transparent;
+            btnUpdateTaxes.Cursor = Cursors.Hand;
+            btnUpdateTaxes.FlatStyle = FlatStyle.Flat;
+            btnUpdateTaxes.Location = new Point(6, 261);
+            btnUpdateTaxes.Name = "btnUpdateTaxes";
+            btnUpdateTaxes.Size = new Size(189, 35);
+            btnUpdateTaxes.TabIndex = 12;
+            btnUpdateTaxes.Text = "💾 Сохранить налоги";
+            btnUpdateTaxes.UseVisualStyleBackColor = false;
+            // 
             // ManagePaymentsForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -213,5 +227,6 @@
         private GroupBox grpPaymentList;
         private GroupBox grpTaxSelection;
         private CheckedListBox clbTaxes;
+        private Button btnUpdateTaxes;
     }
 }

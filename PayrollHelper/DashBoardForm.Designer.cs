@@ -162,9 +162,8 @@
             comboPaymentType.FormattingEnabled = true;
             comboPaymentType.Location = new Point(109, 17);
             comboPaymentType.Name = "comboPaymentType";
-            comboPaymentType.Size = new Size(150, 23);
+            comboPaymentType.Size = new Size(180, 23);
             comboPaymentType.TabIndex = 0;
-  
             // 
             // tabNewEmployee
             // 
@@ -181,7 +180,7 @@
             tabNewEmployee.Location = new Point(4, 24);
             tabNewEmployee.Name = "tabNewEmployee";
             tabNewEmployee.Padding = new Padding(3);
-            tabNewEmployee.Size = new Size(733, 246);
+            tabNewEmployee.Size = new Size(746, 253);
             tabNewEmployee.TabIndex = 1;
             tabNewEmployee.Text = "Добавление сотрудника";
             tabNewEmployee.UseVisualStyleBackColor = true;
@@ -300,7 +299,7 @@
             tabPositions.Location = new Point(4, 24);
             tabPositions.Name = "tabPositions";
             tabPositions.Padding = new Padding(3);
-            tabPositions.Size = new Size(733, 246);
+            tabPositions.Size = new Size(746, 253);
             tabPositions.TabIndex = 2;
             tabPositions.Text = "Добавление должности";
             tabPositions.UseVisualStyleBackColor = true;

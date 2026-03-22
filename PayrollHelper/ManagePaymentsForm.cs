@@ -49,6 +49,7 @@ namespace PayrollHelper
             txtPaymentDescription.Enter += (s, e) => HighlightInvalidField(txtPaymentDescription, true);
 
             btnAddPayment.Click += btnAddPayment_Click;
+            btnUpdateTaxes.Click += btnUpdateTaxes_Click;
             lstPayments.SelectedIndexChanged += lstPayments_SelectedIndexChanged;
 
             // Настройка списка налогов
@@ -305,6 +306,65 @@ namespace PayrollHelper
                 string msg = ex.Message;
                 if (ex.InnerException != null) msg += "\n\nПодробности: " + ex.InnerException.Message;
                 MessageBox.Show($"Ошибка при сохранении выплаты: {msg}", "Критическая ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnUpdateTaxes_Click(object? sender, EventArgs e)
+        {
+            if (lstPayments.SelectedItem == null)
+            {
+                MessageBox.Show("Пожалуйста, выберите выплату из списка для обновления налогов.", "Предупреждение", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            using var transaction = Program.dbContext.Database.BeginTransaction();
+            try
+            {
+                string selectedText = lstPayments.SelectedItem.ToString() ?? "";
+                string paymentName = selectedText.Split(" — ")[0];
+
+                var payment = Program.dbContext.SalaryAndBonuses
+                    .Include(p => p.Taxations)
+                    .FirstOrDefault(p => p.PaymentType == paymentName);
+
+                if (payment == null)
+                {
+                    MessageBox.Show("Выплата не найдена в базе данных.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // Очистка текущих связей
+                payment.Taxations.Clear();
+
+                // Добавление новых связей на основе отмеченных налогов
+                for (int i = 0; i < clbTaxes.Items.Count; i++)
+                {
+                    if (clbTaxes.GetItemChecked(i))
+                    {
+                        var tax = _allTaxes[i];
+                        payment.Taxations.Add(tax);
+                    }
+                }
+
+                Program.dbContext.SaveChanges();
+                transaction.Commit();
+
+                MessageBox.Show($"Налоги для выплаты '{paymentName}' успешно обновлены!", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                // Сохраняем индекс, чтобы выделение не сбросилось
+                int selectedIndex = lstPayments.SelectedIndex;
+                LoadPayments();
+                if (selectedIndex != -1 && selectedIndex < lstPayments.Items.Count)
+                {
+                    lstPayments.SelectedIndex = selectedIndex;
+                }
+            }
+            catch (Exception ex)
+            {
+                transaction.Rollback();
+                string msg = ex.Message;
+                if (ex.InnerException != null) msg += "\n\nПодробности: " + ex.InnerException.Message;
+                MessageBox.Show($"Ошибка при обновлении налогов: {msg}", "Критическая ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }
